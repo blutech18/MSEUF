@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@theme {
+  --color-maroon-50: #fdf2f4;
+  --color-maroon-100: #fce7eb;
+  --color-maroon-200: #f9d0d9;
+  --color-maroon-300: #f4a8b8;
+  --color-maroon-400: #ec7693;
+  --color-maroon-500: #df4a70;
+  --color-maroon-600: #cc295a;
+  --color-maroon-700: #ab1d48;
+  --color-maroon-800: #800020;
+  --color-maroon-900: #6b0d22;
+  --color-maroon-950: #3d0410;
+
+  --color-gold-50: #fffbeb;
+  --color-gold-100: #fef3c7;
+  --color-gold-200: #fde68a;
+  --color-gold-300: #fcd34d;
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+  --color-gold-700: #b45309;
+  --color-gold-800: #92400e;
+  --color-gold-900: #78350f;
+  --color-gold-950: #451a03;
+
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-heading: "Playfair Display", Georgia, serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-gray-900 antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  ::selection {
+    @apply bg-maroon-800 text-white;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-padding {
+    @apply py-12 sm:py-16 lg:py-20;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-maroon-800 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-maroon-900 focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:ring-offset-2 active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg border-2 border-maroon-800 px-6 py-3 text-sm font-semibold text-maroon-800 transition-all duration-200 hover:bg-maroon-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-maroon-500 focus:ring-offset-2 active:scale-[0.98];
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center rounded-lg bg-gold-500 px-6 py-3 text-sm font-semibold text-maroon-950 transition-all duration-200 hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:ring-offset-2 active:scale-[0.98];
+  }
+
+  .card {
+    @apply rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md;
+  }
+
+  .section-title {
+    @apply font-heading text-3xl font-bold tracking-tight text-maroon-800 sm:text-4xl;
+  }
+
+  .section-subtitle {
+    @apply mt-3 text-lg text-gray-600;
+  }
+
+  .page-header {
+    @apply bg-linear-to-r from-maroon-800 to-maroon-900 py-16 text-white;
+  }
+
+  .page-header-title {
+    @apply font-heading text-3xl font-bold sm:text-4xl lg:text-5xl;
+  }
+
+  .page-header-breadcrumb {
+    @apply mt-4 flex items-center gap-2 text-sm text-maroon-200;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
