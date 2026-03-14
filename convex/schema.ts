@@ -2,6 +2,20 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  students: defineTable({
+    studentNumber: v.string(),
+    name: v.string(),
+    program: v.string(),
+    department: v.string(),
+    year: v.number(),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_studentNumber", ["studentNumber"])
+    .index("by_department", ["department"])
+    .index("by_program", ["program"])
+    .index("by_isActive", ["isActive"]),
+
   books: defineTable({
     title: v.string(),
     authors: v.array(v.string()),
@@ -49,9 +63,16 @@ export default defineSchema({
     resultsCount: v.number(),
     responseTime: v.number(),
     source: v.optional(v.string()),
+    studentId: v.optional(v.string()),
+    studentName: v.optional(v.string()),
+    department: v.optional(v.string()),
+    program: v.optional(v.string()),
+    page: v.optional(v.string()),
   })
     .index("by_timestamp", ["timestamp"])
-    .index("by_sessionId", ["sessionId"]),
+    .index("by_sessionId", ["sessionId"])
+    .index("by_department", ["department"])
+    .index("by_program", ["program"]),
 
   chatSessions: defineTable({
     sessionId: v.string(),

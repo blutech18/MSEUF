@@ -254,6 +254,98 @@ export const seedFAQs = mutation({
   },
 });
 
+export const seedStudents = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db.query("students").first();
+    if (existing) return "Already seeded";
+
+    const students = [
+      {
+        studentNumber: "2024-00101",
+        name: "Juan Dela Cruz",
+        program: "BS Computer Engineering",
+        department: "College of Engineering",
+        year: 3,
+      },
+      {
+        studentNumber: "2024-00102",
+        name: "Maria Santos",
+        program: "BS Psychology",
+        department: "College of Arts and Sciences",
+        year: 2,
+      },
+      {
+        studentNumber: "2024-00103",
+        name: "Jose Rizal Jr.",
+        program: "BS Accountancy",
+        department: "College of Business and Accountancy",
+        year: 4,
+      },
+      {
+        studentNumber: "2024-00104",
+        name: "Ana Reyes",
+        program: "Bachelor of Secondary Education",
+        department: "College of Education",
+        year: 3,
+      },
+      {
+        studentNumber: "2024-00105",
+        name: "Carlos Garcia",
+        program: "BS Civil Engineering",
+        department: "College of Engineering",
+        year: 2,
+      },
+      {
+        studentNumber: "2024-00106",
+        name: "Isabella Cruz",
+        program: "BS Nursing",
+        department: "College of Nursing and Health Sciences",
+        year: 4,
+      },
+      {
+        studentNumber: "2024-00107",
+        name: "Miguel Torres",
+        program: "BS Business Administration",
+        department: "College of Business and Accountancy",
+        year: 1,
+      },
+      {
+        studentNumber: "2024-00108",
+        name: "Sofia Bautista",
+        program: "BA Communication",
+        department: "College of Arts and Sciences",
+        year: 3,
+      },
+      {
+        studentNumber: "2024-00109",
+        name: "Rafael Mendoza",
+        program: "BS Electrical Engineering",
+        department: "College of Engineering",
+        year: 4,
+      },
+      {
+        studentNumber: "2024-00110",
+        name: "Patricia Villanueva",
+        program: "Bachelor of Elementary Education",
+        department: "College of Education",
+        year: 2,
+      },
+    ];
+
+    const now = Date.now();
+    for (const student of students) {
+      await ctx.db.insert("students", {
+        ...student,
+        isActive: true,
+        createdAt: now,
+      });
+    }
+
+    return `Seeded ${students.length} students`;
+  },
+});
+
 async function hashPassword(password: string): Promise<string> {
   const buf = new TextEncoder().encode(password);
   const hash = await crypto.subtle.digest("SHA-256", buf);

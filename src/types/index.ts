@@ -91,6 +91,26 @@ export interface FAQ {
   isActive: boolean;
 }
 
+export interface Student {
+  _id: string;
+  studentNumber: string;
+  name: string;
+  program: string;
+  department: string;
+  year: number;
+  isActive: boolean;
+  createdAt: number;
+}
+
+export interface VerifiedStudent {
+  _id: string;
+  studentNumber: string;
+  name: string;
+  program: string;
+  department: string;
+  year: number;
+}
+
 export interface NavItem {
   label: string;
   href: string;

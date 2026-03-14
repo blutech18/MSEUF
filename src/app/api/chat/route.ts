@@ -63,7 +63,7 @@ ONLINE FORMS:
 
 RESPONSE RULES — FOLLOW STRICTLY:
 1. When BOOKS DATA is provided below, you MUST list them specifically. Use this format for each book:
-   📖 **[Title]** by [Author] — [Publisher], [Year] — Status: [Available/Unavailable]
+   [Title] by [Author] — [Publisher], [Year] — Status: [Available/Unavailable]
 2. Count your results: "I found X books related to [topic]:" then list them.
 3. NEVER fabricate book titles, authors, publishers, call numbers, or statuses. ONLY cite data actually provided below.
 4. If BOOKS DATA shows 0 results, say: "I didn't find books matching that query in our catalog. You can try different keywords, or visit the library for assistance."
@@ -72,9 +72,30 @@ RESPONSE RULES — FOLLOW STRICTLY:
 7. For greetings (hi, hello, kumusta), respond warmly and offer to help — do NOT search for books.
 8. For service questions (hours, forms, databases), answer from the LIBRARY FACTS above — do NOT search for books.
 9. Respond in Filipino if the user writes in Filipino/Tagalog. Otherwise use English.
-10. Keep responses well-structured using bullet points or numbered lists for clarity.
+10. Keep responses well-structured using numbered lists or line breaks for clarity.
 11. If more than 10 books match, list the first 10 and say "and X more — ask me to show more or narrow your search."
-12. Always end with a helpful follow-up: "Would you like to know more about any of these books?" or similar.`;
+12. Always end with a helpful follow-up: "Would you like to know more about any of these books?" or similar.
+
+STYLE AND FORMATTING — MANDATORY:
+- Use asterisks for emphasis: *italic* for titles, **bold** for important terms and headings.
+- Use numbered lists (1. 2. 3.) or dashes (-) for listing items.
+- Use **bold** to highlight book titles, section names, and key information.
+- Use *italic* for subtitles, author names, and supplementary details.
+- Keep your tone professional, courteous, and informative — like a formal university librarian.
+- Do not use emojis except sparingly for book listings where a simple icon aids readability.
+- Structure responses clearly with line breaks between sections.`;
+
+// ─── RESPONSE SANITIZER ──────────────────────────────────────────────────────
+
+function sanitizeResponse(text: string): string {
+  return text
+    .replace(/_{2,}(.*?)_{2,}/g, "$1")
+    .replace(/~{2}(.*?)~{2}/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/`{1,3}([^`]+)`{1,3}/g, "$1")
+    .trim();
+}
 
 // ─── COLLEGE & TOPIC SYNONYMS ────────────────────────────────────────────────
 
@@ -279,10 +300,18 @@ function buildLiveContext(
 
 // ─── MAIN HANDLER ────────────────────────────────────────────────────────────
 
+interface StudentInfo {
+  studentId?: string;
+  studentName?: string;
+  department?: string;
+  program?: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { message, history } = await request.json();
+    const { message, history, student } = await request.json();
     const historyArr: Message[] = (history as Message[]) || [];
+    const studentInfo: StudentInfo = student || {};
 
     // 1. Detect intent
     const intent = detectIntent(message);
@@ -337,15 +366,17 @@ export async function POST(request: NextRequest) {
     const chat = model.startChat({ history: geminiHistory });
     const result = await chat.sendMessage(message);
 
-    const responseText =
+    const rawText =
       result.response.text()?.trim() ||
       "I'm sorry, I couldn't generate a response. Please try again or contact library@mseuf.edu.ph.";
+
+    const responseText = sanitizeResponse(rawText);
 
     // 7. Return response with book metadata for UI cards
     const metadata =
       books.length > 0 ? { books: books.slice(0, 5) } : undefined;
 
-    // 8. Log query
+    // 8. Log query with student info
     try {
       await convexClient.mutation(api.queryLogs.log, {
         query: message,
@@ -353,6 +384,10 @@ export async function POST(request: NextRequest) {
         resultsCount: totalBookCount,
         responseTime: 0,
         source: "chatbot",
+        studentId: studentInfo.studentId,
+        studentName: studentInfo.studentName,
+        department: studentInfo.department,
+        program: studentInfo.program,
       });
     } catch {
       // Ignore

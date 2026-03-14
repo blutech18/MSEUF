@@ -13,6 +13,7 @@ import type * as faqs from "../faqs.js";
 import type * as queryLogs from "../queryLogs.js";
 import type * as seed from "../seed.js";
 import type * as staff from "../staff.js";
+import type * as students from "../students.js";
 
 import type {
   ApiFromModules,
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   queryLogs: typeof queryLogs;
   seed: typeof seed;
   staff: typeof staff;
+  students: typeof students;
 }>;
 
 /**

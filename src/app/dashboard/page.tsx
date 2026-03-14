@@ -12,6 +12,7 @@ import {
   Loader2,
   Users,
   HelpCircle,
+  GraduationCap,
 } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -19,6 +20,7 @@ import { useAuthStore } from "@/stores/authStore";
 
 export default function DashboardPage() {
   const counts = useQuery(api.books.getCounts);
+  const studentCounts = useQuery(api.students.getCounts);
   const recentBooks = useQuery(api.books.list, { limit: 5 });
   const { user } = useAuthStore();
 
@@ -28,7 +30,7 @@ export default function DashboardPage() {
     ? [
         { label: "Total Books", value: counts.total, icon: BookOpen, color: "bg-blue-50 text-blue-700" },
         { label: "Available", value: counts.available, icon: CheckCircle, color: "bg-green-50 text-green-700" },
-        { label: "Unavailable", value: counts.unavailable, icon: XCircle, color: "bg-red-50 text-red-700" },
+        { label: "Enrolled Students", value: studentCounts?.active ?? 0, icon: GraduationCap, color: "bg-purple-50 text-purple-700" },
         { label: "Reserved", value: counts.reserved, icon: Clock, color: "bg-yellow-50 text-yellow-700" },
       ]
     : [];
@@ -142,11 +144,11 @@ export default function DashboardPage() {
                     <span className="text-sm font-medium text-blue-800">View Analytics</span>
                   </Link>
                   <Link
-                    href="/dashboard/faqs"
+                    href="/dashboard/students"
                     className="flex flex-col items-center gap-2 rounded-xl bg-green-50 p-4 text-center transition-colors hover:bg-green-100"
                   >
-                    <HelpCircle className="h-8 w-8 text-green-700" />
-                    <span className="text-sm font-medium text-green-800">Manage FAQs</span>
+                    <GraduationCap className="h-8 w-8 text-green-700" />
+                    <span className="text-sm font-medium text-green-800">Manage Students</span>
                   </Link>
                   {user?.role === "admin" ? (
                     <Link
@@ -158,11 +160,11 @@ export default function DashboardPage() {
                     </Link>
                   ) : (
                     <Link
-                      href="/dashboard/analytics"
+                      href="/dashboard/faqs"
                       className="flex flex-col items-center gap-2 rounded-xl bg-amber-50 p-4 text-center transition-colors hover:bg-amber-100"
                     >
-                      <AlertCircle className="h-8 w-8 text-amber-700" />
-                      <span className="text-sm font-medium text-amber-800">Demand Insights</span>
+                      <HelpCircle className="h-8 w-8 text-amber-700" />
+                      <span className="text-sm font-medium text-amber-800">Manage FAQs</span>
                     </Link>
                   )}
                 </div>
@@ -182,6 +184,10 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 text-sm text-maroon-200">
                     <div className="h-2 w-2 rounded-full bg-green-400" />
                     {counts?.total.toLocaleString() ?? "—"} books in catalog
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-maroon-200">
+                    <div className="h-2 w-2 rounded-full bg-green-400" />
+                    {studentCounts?.active.toLocaleString() ?? "—"} enrolled students
                   </div>
                 </div>
               </div>

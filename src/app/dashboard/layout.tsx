@@ -12,6 +12,7 @@ import {
   X,
   HelpCircle,
   Users,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
@@ -20,6 +21,7 @@ import { useDashboardStore } from "@/stores/dashboardStore";
 const NAV_LINKS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, roles: ["admin", "librarian", "staff"] },
   { href: "/dashboard/books", label: "Book Management", icon: BookOpen, roles: ["admin", "librarian", "staff"] },
+  { href: "/dashboard/students", label: "Student Management", icon: GraduationCap, roles: ["admin", "librarian"] },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3, roles: ["admin", "librarian"] },
   { href: "/dashboard/faqs", label: "FAQ Management", icon: HelpCircle, roles: ["admin", "librarian"] },
   { href: "/dashboard/staff", label: "Staff Accounts", icon: Users, roles: ["admin"] },
