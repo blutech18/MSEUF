@@ -16,22 +16,37 @@ export default function PeriodicalsPage() {
         <div className="grid gap-12 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-8">
             <p className="text-lg text-gray-600 leading-relaxed">
-              The Periodicals Section maintains a comprehensive collection of magazines, newspapers, 
-              journals, and other serial publications. These resources provide current information 
-              and support academic research with up-to-date content.
+              The Periodicals Section is the central hub for journals, magazines, newspapers, 
+              and serial literature. We maintain an extensive collection of current information 
+              resources to support the university's research and academic curriculum.
             </p>
+            
             <div className="grid gap-6 sm:grid-cols-3">
               {[
-                { icon: Newspaper, title: "Newspapers", desc: "Daily local and national newspapers for current events." },
-                { icon: BookOpen, title: "Journals", desc: "Academic and professional journals across disciplines." },
-                { icon: Globe, title: "Magazines", desc: "Popular and scholarly magazines on various topics." },
+                { icon: Newspaper, title: "70+ Print Titles", desc: "Current local and national newspapers and specialized magazines." },
+                { icon: Globe, title: "4,000+ Online", desc: "Digital access to world-class journals via ProQuest and Gale databases." },
+                { icon: BookOpen, title: "Back Issues", desc: "Bound and unbound back issues of academic journals for longitudinal research." },
               ].map((item) => (
-                <div key={item.title} className="card text-center">
+                <div key={item.title} className="card text-center transition-all hover:border-maroon-100">
                   <item.icon className="mx-auto h-8 w-8 text-maroon-600" />
-                  <h3 className="mt-3 font-heading text-base font-semibold text-gray-900">{item.title}</h3>
+                  <h3 className="mt-3 font-heading text-base font-bold text-gray-900">{item.title}</h3>
                   <p className="mt-2 text-sm text-gray-600">{item.desc}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-8">
+              <h3 className="font-heading text-xl font-bold text-maroon-800">Section Services</h3>
+              <ul className="mt-4 grid gap-4 sm:grid-cols-2">
+                <li className="flex items-start gap-3">
+                  <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-maroon-600"></div>
+                  <p className="text-sm text-gray-700">Display of latest local and foreign newspapers.</p>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-maroon-600"></div>
+                  <p className="text-sm text-gray-700">Digital indexing of journal articles for easy retrieval.</p>
+                </li>
+              </ul>
             </div>
           </div>
           <div className="space-y-6">

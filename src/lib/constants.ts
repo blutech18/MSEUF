@@ -24,6 +24,7 @@ export const ABOUT_ITEMS = [
   { label: "Library Personnel", href: "/about/personnel" },
   { label: "University Library AVP", href: "/about/library-avp" },
   { label: "Activities", href: "/about/activities" },
+  { label: "Services", href: "/services" },
 ] as const;
 
 export const SERVICE_ITEMS = [

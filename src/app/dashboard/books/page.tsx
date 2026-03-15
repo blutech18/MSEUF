@@ -12,6 +12,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Link,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -35,6 +36,7 @@ const EMPTY_FORM = {
   abstract: "",
   language: "English",
   format: "Hardcover",
+  digitalAccessLink: "",
   availability: "available" as BookAvailabilityStatus,
 };
 
@@ -111,6 +113,7 @@ export default function BooksPage() {
       abstract: book.abstract ?? "",
       language: book.language ?? "English",
       format: book.format ?? "Hardcover",
+      digitalAccessLink: book.digitalAccessLink ?? "",
       availability: book.availability as BookAvailabilityStatus,
     });
     setFormError("");
@@ -143,6 +146,7 @@ export default function BooksPage() {
           abstract: form.abstract || undefined,
           language: form.language || undefined,
           format: form.format || undefined,
+          digitalAccessLink: form.digitalAccessLink || undefined,
           availability: form.availability,
         });
       } else {
@@ -160,6 +164,7 @@ export default function BooksPage() {
           abstract: form.abstract || undefined,
           language: form.language || undefined,
           format: form.format || undefined,
+          digitalAccessLink: form.digitalAccessLink || undefined,
           availability: form.availability,
         });
       }
@@ -246,9 +251,16 @@ export default function BooksPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <BookOpen className="h-4 w-4 shrink-0 text-maroon-600" />
-                        <span className="font-medium text-gray-900">
-                          {book.title}
-                        </span>
+                        <div>
+                          <span className="font-medium text-gray-900">
+                            {book.title}
+                          </span>
+                          {book.digitalAccessLink && (
+                            <span className="ml-2 inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">
+                              <Link className="h-2.5 w-2.5" /> E-Book
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
@@ -470,6 +482,14 @@ export default function BooksPage() {
                 onChange={(e) =>
                   setForm({ ...form, keywords: e.target.value })
                 }
+              />
+              <Input
+                label="Digital Access Link (E-Book URL)"
+                value={form.digitalAccessLink}
+                onChange={(e) =>
+                  setForm({ ...form, digitalAccessLink: e.target.value })
+                }
+                placeholder="https://example.com/ebook-link"
               />
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">

@@ -19,54 +19,6 @@ import { api } from "../../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
-const DEPARTMENTS = [
-  "College of Arts and Sciences",
-  "College of Business and Accountancy",
-  "College of Education",
-  "College of Engineering",
-  "College of Nursing and Health Sciences",
-  "Institute of Graduate Studies and Research",
-];
-
-const PROGRAMS: Record<string, string[]> = {
-  "College of Arts and Sciences": [
-    "BS Psychology",
-    "BS Biology",
-    "BA Communication",
-    "BA Political Science",
-    "BS Mathematics",
-  ],
-  "College of Business and Accountancy": [
-    "BS Accountancy",
-    "BS Business Administration",
-    "BS Management Accounting",
-    "BS Entrepreneurship",
-  ],
-  "College of Education": [
-    "Bachelor of Elementary Education",
-    "Bachelor of Secondary Education",
-    "Bachelor of Physical Education",
-  ],
-  "College of Engineering": [
-    "BS Civil Engineering",
-    "BS Mechanical Engineering",
-    "BS Electrical Engineering",
-    "BS Electronics Engineering",
-    "BS Computer Engineering",
-    "BS Industrial Engineering",
-  ],
-  "College of Nursing and Health Sciences": [
-    "BS Nursing",
-    "BS Medical Technology",
-    "BS Pharmacy",
-  ],
-  "Institute of Graduate Studies and Research": [
-    "Master of Arts in Education",
-    "Master in Business Administration",
-    "Doctor of Education",
-  ],
-};
-
 interface AddStudentForm {
   studentNumber: string;
   name: string;
@@ -90,6 +42,18 @@ export default function StudentsPage() {
   const [form, setForm] = useState<AddStudentForm>({ ...EMPTY_FORM });
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Dynamic departments and programs from Convex
+  const departments = useQuery(api.programs.listDepartments, {});
+  const allPrograms = useQuery(api.programs.listPrograms, {});
+
+  // Programs filtered by the selected department in the form
+  const availablePrograms = form.department && allPrograms
+    ? allPrograms.filter((p) => {
+        const dept = departments?.find((d) => d.name === form.department);
+        return dept ? p.departmentId === dept._id : false;
+      })
+    : [];
 
   const students = useQuery(api.students.list, {
     searchQuery: search || undefined,
@@ -269,9 +233,9 @@ export default function StudentsPage() {
                   className="w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 pr-8 text-sm text-gray-900 transition-colors focus:border-maroon-400 focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
                 >
                   <option value="">Select department</option>
-                  {DEPARTMENTS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
+                  {(departments ?? []).map((d) => (
+                    <option key={d._id} value={d.name}>
+                      {d.name}
                     </option>
                   ))}
                 </select>
@@ -294,12 +258,11 @@ export default function StudentsPage() {
                   <option value="">
                     {form.department ? "Select program" : "Select department first"}
                   </option>
-                  {form.department &&
-                    PROGRAMS[form.department]?.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
+                  {availablePrograms.map((p) => (
+                    <option key={p._id} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-3 h-4 w-4 text-gray-400" />
               </div>
@@ -351,7 +314,7 @@ export default function StudentsPage() {
 
       {/* Search & Filter */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-50">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             value={search}
@@ -367,9 +330,9 @@ export default function StudentsPage() {
             className="appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 pr-8 text-sm text-gray-900 transition-colors focus:border-maroon-400 focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
           >
             <option value="">All Departments</option>
-            {DEPARTMENTS.map((d) => (
-              <option key={d} value={d}>
-                {d}
+            {(departments ?? []).map((d) => (
+              <option key={d._id} value={d.name}>
+                {d.name}
               </option>
             ))}
           </select>

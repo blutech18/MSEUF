@@ -4,14 +4,46 @@ import { useState } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { CalendarDays, CheckCircle } from "lucide-react";
+import { CalendarDays, CheckCircle, Loader2 } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 export default function AppointmentPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [name, setName] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [email, setEmail] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [purpose, setPurpose] = useState("");
+
+  const submitAppointment = useMutation(api.forms.submitAppointment);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setError("");
+    try {
+      await submitAppointment({ name, studentId, email, date, time, purpose });
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setName("");
+    setStudentId("");
+    setEmail("");
+    setDate("");
+    setTime("");
+    setPurpose("");
   };
 
   return (
@@ -28,7 +60,7 @@ export default function AppointmentPage() {
               <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
               <h2 className="mt-4 font-heading text-2xl font-bold text-gray-900">Appointment Submitted!</h2>
               <p className="mt-2 text-gray-600">We will confirm your appointment via email. Please check your inbox.</p>
-              <Button className="mt-6" onClick={() => setSubmitted(false)}>Book Another Appointment</Button>
+              <Button className="mt-6" onClick={handleReset}>Book Another Appointment</Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="card space-y-6">
@@ -37,16 +69,20 @@ export default function AppointmentPage() {
                 <h2 className="font-heading text-xl font-bold text-gray-900">Appointment Details</h2>
               </div>
 
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>
+              )}
+
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input label="Full Name" id="name" placeholder="Juan Dela Cruz" required />
-                <Input label="Student / Employee ID" id="studentId" placeholder="2024-00001" required />
+                <Input label="Full Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Juan Dela Cruz" required />
+                <Input label="Student / Employee ID" value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="2024-00001" required />
               </div>
-              <Input label="Email Address" id="email" type="email" placeholder="juan@mseuf.edu.ph" required />
+              <Input label="Email Address" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="juan@mseuf.edu.ph" required />
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input label="Preferred Date" id="date" type="date" required />
+                <Input label="Preferred Date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
                 <div>
                   <label htmlFor="time" className="mb-1.5 block text-sm font-medium text-gray-700">Preferred Time</label>
-                  <select id="time" required className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20">
+                  <select id="time" required value={time} onChange={(e) => setTime(e.target.value)} className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20">
                     <option value="">Select time slot</option>
                     <option>7:00 AM – 9:00 AM</option>
                     <option>9:00 AM – 11:00 AM</option>
@@ -59,10 +95,13 @@ export default function AppointmentPage() {
               </div>
               <div>
                 <label htmlFor="purpose" className="mb-1.5 block text-sm font-medium text-gray-700">Purpose of Visit</label>
-                <textarea id="purpose" rows={3} required placeholder="Describe the purpose of your appointment..." className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20" />
+                <textarea id="purpose" rows={3} required value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="Describe the purpose of your appointment..." className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20" />
               </div>
 
-              <Button type="submit" size="lg" className="w-full">Submit Appointment Request</Button>
+              <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit Appointment Request
+              </Button>
             </form>
           )}
         </div>

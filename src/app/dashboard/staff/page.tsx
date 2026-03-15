@@ -86,7 +86,7 @@ export default function StaffPage() {
           name: form.name,
           email: form.email,
           role: form.role,
-          ...(form.password ? { passwordHash: form.password } : {}),
+          ...(form.password ? { password: form.password } : {}),
         });
       } else {
         if (!form.password) {
@@ -97,7 +97,7 @@ export default function StaffPage() {
         await createStaff({
           name: form.name,
           email: form.email,
-          passwordHash: form.password,
+          password: form.password,
           role: form.role,
         });
       }

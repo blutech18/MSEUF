@@ -4,14 +4,46 @@ import { useState } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { RefreshCw, CheckCircle } from "lucide-react";
+import { RefreshCw, CheckCircle, Loader2 } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 export default function BookRenewalPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [name, setName] = useState("");
+  const [libraryCardNumber, setLibraryCardNumber] = useState("");
+  const [bookTitle, setBookTitle] = useState("");
+  const [callNumber, setCallNumber] = useState("");
+  const [dateBorrowed, setDateBorrowed] = useState("");
+  const [renewalPeriod, setRenewalPeriod] = useState("");
+
+  const submitBookRenewal = useMutation(api.forms.submitBookRenewal);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setError("");
+    try {
+      await submitBookRenewal({ name, libraryCardNumber, bookTitle, callNumber, dateBorrowed, renewalPeriod });
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setName("");
+    setLibraryCardNumber("");
+    setBookTitle("");
+    setCallNumber("");
+    setDateBorrowed("");
+    setRenewalPeriod("");
   };
 
   return (
@@ -28,7 +60,7 @@ export default function BookRenewalPage() {
               <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
               <h2 className="mt-4 font-heading text-2xl font-bold text-gray-900">Renewal Request Submitted!</h2>
               <p className="mt-2 text-gray-600">Your renewal is being processed. Check your email for confirmation.</p>
-              <Button className="mt-6" onClick={() => setSubmitted(false)}>Renew Another Book</Button>
+              <Button className="mt-6" onClick={handleReset}>Renew Another Book</Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="card space-y-6">
@@ -37,18 +69,22 @@ export default function BookRenewalPage() {
                 <h2 className="font-heading text-xl font-bold text-gray-900">Book Renewal Form</h2>
               </div>
 
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>
+              )}
+
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input label="Full Name" id="name" placeholder="Juan Dela Cruz" required />
-                <Input label="Library Card Number" id="cardNumber" placeholder="LIB-2024-0001" required />
+                <Input label="Full Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Juan Dela Cruz" required />
+                <Input label="Library Card Number" value={libraryCardNumber} onChange={(e) => setLibraryCardNumber(e.target.value)} placeholder="LIB-2024-0001" required />
               </div>
-              <Input label="Book Title" id="bookTitle" placeholder="Enter the title of the book" required />
+              <Input label="Book Title" value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} placeholder="Enter the title of the book" required />
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input label="Call Number" id="callNumber" placeholder="QA76.6 .S65 2022" required />
-                <Input label="Date Borrowed" id="dateBorrowed" type="date" required />
+                <Input label="Call Number" value={callNumber} onChange={(e) => setCallNumber(e.target.value)} placeholder="QA76.6 .S65 2022" required />
+                <Input label="Date Borrowed" type="date" value={dateBorrowed} onChange={(e) => setDateBorrowed(e.target.value)} required />
               </div>
               <div>
                 <label htmlFor="renewalPeriod" className="mb-1.5 block text-sm font-medium text-gray-700">Renewal Period</label>
-                <select id="renewalPeriod" required className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20">
+                <select id="renewalPeriod" required value={renewalPeriod} onChange={(e) => setRenewalPeriod(e.target.value)} className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20">
                   <option value="">Select renewal period</option>
                   <option>3 days</option>
                   <option>1 week</option>
@@ -56,11 +92,14 @@ export default function BookRenewalPage() {
               </div>
 
               <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
-                <strong>Note:</strong> Renewals are subject to availability and outstanding reservation requests. 
+                <strong>Note:</strong> Renewals are subject to availability and outstanding reservation requests.
                 Books can only be renewed once.
               </div>
 
-              <Button type="submit" size="lg" className="w-full">Submit Renewal Request</Button>
+              <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit Renewal Request
+              </Button>
             </form>
           )}
         </div>

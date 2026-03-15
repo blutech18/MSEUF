@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   LogOut,
   GraduationCap,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/stores/chatStore";
@@ -603,74 +604,100 @@ export default function ChatWidget() {
                 </div>
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
-                    message.role === "user"
-                      ? "bg-maroon-800 text-white"
-                      : "bg-gray-100 text-gray-800",
+                    "flex flex-col",
+                    message.role === "user" ? "items-end" : "items-start",
                   )}
                 >
-                  <div className="whitespace-pre-wrap">
-                    {message.role === "assistant"
-                      ? formatBotContent(message.content)
-                      : message.content}
-                  </div>
+                  <div
+                    className={cn(
+                      "max-w-full rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                      message.role === "user"
+                        ? "bg-maroon-800 text-white"
+                        : "bg-gray-100 text-gray-800",
+                    )}
+                  >
+                    <div className="whitespace-pre-wrap">
+                      {message.role === "assistant"
+                        ? formatBotContent(message.content)
+                        : message.content}
+                    </div>
 
-                  {message.metadata?.books &&
-                    message.metadata.books.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {message.metadata.books.map((book) => (
-                          <div
-                            key={book._id}
-                            className="rounded-lg border border-gray-200 bg-white p-3"
-                          >
-                            <div className="flex items-start gap-2">
-                              <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-maroon-600" />
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {book.title}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {book.authors.join(", ")}
-                                </p>
-                                {book.callNumber && (
-                                  <p className="mt-1 text-xs text-gray-400">
-                                    Call #: {book.callNumber}
+                    {message.metadata?.books &&
+                      message.metadata.books.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {message.metadata.books.map((book) => (
+                            <div
+                              key={book._id}
+                              className="rounded-lg border border-gray-200 bg-white p-3"
+                            >
+                              <div className="flex items-start gap-2">
+                                <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-maroon-600" />
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {book.title}
                                   </p>
-                                )}
-                                <span
-                                  className={cn(
-                                    "mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium",
-                                    book.availability === "available"
-                                      ? "bg-green-100 text-green-700"
-                                      : book.availability === "reserved"
-                                        ? "bg-yellow-100 text-yellow-700"
-                                        : "bg-red-100 text-red-700",
+                                  <p className="text-xs text-gray-500">
+                                    {book.authors.join(", ")}
+                                  </p>
+                                  {book.callNumber && (
+                                    <p className="mt-1 text-xs text-gray-400">
+                                      Call #: {book.callNumber}
+                                    </p>
                                   )}
-                                >
-                                  {book.availability.charAt(0).toUpperCase() +
-                                    book.availability.slice(1)}
-                                </span>
+                                  <span
+                                    className={cn(
+                                      "mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+                                      book.availability === "available"
+                                        ? "bg-green-100 text-green-700"
+                                        : book.availability === "reserved"
+                                          ? "bg-yellow-100 text-yellow-700"
+                                          : "bg-red-100 text-red-700",
+                                    )}
+                                  >
+                                    {book.availability.charAt(0).toUpperCase() +
+                                      book.availability.slice(1)}
+                                  </span>
+                                  {book.digitalAccessLink && (
+                                    <div className="mt-1.5">
+                                      <a
+                                        href={book.digitalAccessLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 rounded-full bg-maroon-50 px-2.5 py-0.5 text-xs font-medium text-maroon-700 transition-colors hover:bg-maroon-100 hover:text-maroon-900"
+                                      >
+                                        <ExternalLink className="h-3 w-3" />
+                                        Access E-Book
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )}
 
-                  {message.metadata?.suggestions &&
-                    message.metadata.suggestions.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {message.metadata.suggestions.map((s, i) => (
-                          <button
-                            key={i}
-                            onClick={() => handleQuickAction(s)}
-                            className="rounded-full border border-maroon-200 bg-white px-3 py-1 text-xs text-maroon-700 transition-colors hover:bg-maroon-50"
-                          >
-                            {s}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    {message.metadata?.suggestions &&
+                      message.metadata.suggestions.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {message.metadata.suggestions.map((s, i) => (
+                            <button
+                              key={i}
+                              onClick={() => handleQuickAction(s)}
+                              className="rounded-full border border-maroon-200 bg-white px-3 py-1 text-xs text-maroon-700 transition-colors hover:bg-maroon-50"
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                  <span className="mt-1 px-1 text-[10px] text-gray-400">
+                    {new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </div>
               </div>
             ))}

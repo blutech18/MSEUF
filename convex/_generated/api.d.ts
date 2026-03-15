@@ -10,6 +10,8 @@
 
 import type * as books from "../books.js";
 import type * as faqs from "../faqs.js";
+import type * as forms from "../forms.js";
+import type * as programs from "../programs.js";
 import type * as queryLogs from "../queryLogs.js";
 import type * as seed from "../seed.js";
 import type * as staff from "../staff.js";
@@ -24,6 +26,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   books: typeof books;
   faqs: typeof faqs;
+  forms: typeof forms;
+  programs: typeof programs;
   queryLogs: typeof queryLogs;
   seed: typeof seed;
   staff: typeof staff;

@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "mseuf.edu.ph",
       },
+      {
+        protocol: "https",
+        hostname: "envergalibrary.wordpress.com",
+      },
     ],
   },
 };

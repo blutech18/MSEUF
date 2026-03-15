@@ -49,10 +49,13 @@ export default defineSchema({
     email: v.string(),
     name: v.string(),
     passwordHash: v.string(),
+    passwordSalt: v.optional(v.string()),
     role: v.string(),
     avatarUrl: v.optional(v.string()),
     lastLogin: v.optional(v.number()),
     isActive: v.boolean(),
+    loginAttempts: v.optional(v.number()),
+    lockedUntil: v.optional(v.number()),
   }).index("by_email", ["email"]),
 
   queryLogs: defineTable({
@@ -120,4 +123,66 @@ export default defineSchema({
       v.object({ hour: v.number(), count: v.number() })
     ),
   }).index("by_date", ["date"]),
+
+  departments: defineTable({
+    name: v.string(),
+    abbreviation: v.optional(v.string()),
+    isActive: v.boolean(),
+    order: v.number(),
+  })
+    .index("by_name", ["name"])
+    .index("by_order", ["order"]),
+
+  programs: defineTable({
+    name: v.string(),
+    departmentId: v.id("departments"),
+    isActive: v.boolean(),
+  })
+    .index("by_departmentId", ["departmentId"])
+    .index("by_name", ["name"]),
+
+  appointments: defineTable({
+    name: v.string(),
+    studentId: v.string(),
+    email: v.string(),
+    date: v.string(),
+    time: v.string(),
+    purpose: v.string(),
+    status: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_createdAt", ["createdAt"]),
+
+  registrations: defineTable({
+    name: v.string(),
+    studentId: v.string(),
+    email: v.string(),
+    department: v.string(),
+    yearLevel: v.string(),
+    contact: v.string(),
+    status: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_createdAt", ["createdAt"]),
+
+  bookRenewals: defineTable({
+    name: v.string(),
+    libraryCardNumber: v.string(),
+    bookTitle: v.string(),
+    callNumber: v.string(),
+    dateBorrowed: v.string(),
+    renewalPeriod: v.string(),
+    status: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_createdAt", ["createdAt"]),
+
+  surveys: defineTable({
+    ratings: v.array(v.object({ criterion: v.string(), rating: v.number() })),
+    comments: v.optional(v.string()),
+    createdAt: v.number(),
+  }),
 });

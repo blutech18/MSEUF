@@ -16,22 +16,39 @@ export default function LUISSPage() {
         <div className="grid gap-12 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-8">
             <p className="text-lg text-gray-600 leading-relaxed">
-              LUISS provides technology-based services including computer stations for research, 
-              internet access, digital catalog access, and technical assistance for using 
-              library information systems.
+              The Library User Information System Section (LUISS) provides Internet workstations 
+              for research and educational purposes. The facility is equipped with 14 computers, 
+              including 7 dedicated Internet terminals, server units, makerspace workstations, 
+              and faculty-accessible systems.
             </p>
+            
             <div className="grid gap-6 sm:grid-cols-3">
               {[
-                { icon: Monitor, title: "Computer Stations", desc: "Workstations with internet access for research and catalog browsing." },
-                { icon: Wifi, title: "Internet Access", desc: "Wi-Fi connectivity for students using personal devices." },
-                { icon: Database, title: "Digital Catalog", desc: "Access to OPAC and online databases from library terminals." },
+                { icon: Monitor, title: "14 Workstations", desc: "Equipped for research, OPAC access, and academic projects." },
+                { icon: Wifi, title: "Connectivity", desc: "High-speed internet access for authorized research activities." },
+                { icon: Database, title: "Digital Access", desc: "Direct access to our subscribed databases and digital archives." },
               ].map((item) => (
-                <div key={item.title} className="card text-center">
+                <div key={item.title} className="card text-center transition-all hover:border-maroon-100">
                   <item.icon className="mx-auto h-8 w-8 text-maroon-600" />
-                  <h3 className="mt-3 font-heading text-base font-semibold text-gray-900">{item.title}</h3>
+                  <h3 className="mt-3 font-heading text-base font-bold text-gray-900">{item.title}</h3>
                   <p className="mt-2 text-sm text-gray-600">{item.desc}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-8">
+              <h3 className="font-heading text-xl font-bold text-blue-900">Usage Guidelines</h3>
+              <ul className="mt-4 space-y-3 text-sm text-blue-700">
+                <li className="flex gap-2">
+                  <span className="font-bold underline">Research First:</span> Computer use is strictly for research and educational purposes. Social media and recreational games are prohibited.
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold underline">Time Limit:</span> Students are entitled to 40 hours of internet use per month, with a maximum of 2 hours per day.
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold underline">Access:</span> Valid student ID and library registration are required for login.
+                </li>
+              </ul>
             </div>
           </div>
           <div className="space-y-6">
