@@ -241,6 +241,7 @@ export default function BooksPage() {
                   <th className="px-4 py-3">Author(s)</th>
                   <th className="px-4 py-3">Call Number</th>
                   <th className="px-4 py-3">Location</th>
+                  <th className="px-4 py-3">E-Book Link</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
@@ -251,16 +252,9 @@ export default function BooksPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <BookOpen className="h-4 w-4 shrink-0 text-maroon-600" />
-                        <div>
-                          <span className="font-medium text-gray-900">
-                            {book.title}
-                          </span>
-                          {book.digitalAccessLink && (
-                            <span className="ml-2 inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">
-                              <Link className="h-2.5 w-2.5" /> E-Book
-                            </span>
-                          )}
-                        </div>
+                        <span className="font-medium text-gray-900">
+                          {book.title}
+                        </span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
@@ -271,6 +265,22 @@ export default function BooksPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       {book.shelfLocation ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {book.digitalAccessLink ? (
+                        <a
+                          href={book.digitalAccessLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-maroon-700 underline underline-offset-2 hover:text-maroon-900"
+                          title={book.digitalAccessLink}
+                        >
+                          <Link className="h-3.5 w-3.5 shrink-0" />
+                          Open Link
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={availabilityBadge(book.availability)}>
@@ -300,7 +310,7 @@ export default function BooksPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-4 py-12 text-center text-gray-500"
                     >
                       {searchQuery
