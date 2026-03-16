@@ -12,6 +12,8 @@ import {
   X,
   Clock,
   Trash2,
+  FileImage,
+  ExternalLink,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -157,6 +159,7 @@ function RegistrationsTab({ filter }: { filter: string }) {
   const updateStatus = useMutation(api.forms.updateRegistrationStatus);
   const deleteRegistration = useMutation(api.forms.deleteRegistration);
   const [registrationToDelete, setRegistrationToDelete] = useState<Id<"registrations"> | null>(null);
+  const [proofPreview, setProofPreview] = useState<{ url: string; name: string } | null>(null);
 
   if (rows === undefined)
     return <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-maroon-700" /></div>;
@@ -169,23 +172,38 @@ function RegistrationsTab({ filter }: { filter: string }) {
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-4 py-3 text-left font-medium text-gray-600">Name</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 hidden sm:table-cell">Email</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 hidden md:table-cell">Department</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Year</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-600">Actions</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600 hidden sm:table-cell">Email</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600 hidden md:table-cell">Department</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600">Year</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600">Proof</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600">Status</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {rows.map((r) => (
             <tr key={r._id} className="hover:bg-gray-50">
               <td className="px-4 py-3 font-medium text-gray-900">{r.name}<div className="text-xs text-gray-500">{r.studentId}</div></td>
-              <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{r.email}</td>
-              <td className="px-4 py-3 text-gray-600 hidden md:table-cell text-xs">{r.department}</td>
-              <td className="px-4 py-3 text-gray-600">{r.yearLevel}</td>
-              <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
+              <td className="px-4 py-3 text-center text-gray-600 hidden sm:table-cell">{r.email}</td>
+              <td className="px-4 py-3 text-center text-gray-600 hidden md:table-cell text-xs">{r.department}</td>
+              <td className="px-4 py-3 text-center text-gray-600">{r.yearLevel}</td>
+              <td className="px-4 py-3 text-center">
+                {r.enrollmentProofUrl ? (
+                  <button
+                    onClick={() => setProofPreview({ url: r.enrollmentProofUrl!, name: r.name })}
+                    className="mx-auto inline-flex items-center gap-1 rounded-md border border-maroon-200 bg-maroon-50 px-2 py-1 text-xs font-medium text-maroon-700 hover:bg-maroon-100 transition-colors"
+                    title="View proof of enrollment"
+                  >
+                    <FileImage className="h-3.5 w-3.5" />
+                    View
+                  </button>
+                ) : (
+                  <span className="text-xs text-gray-300">—</span>
+                )}
+              </td>
+              <td className="px-4 py-3 text-center"><StatusBadge status={r.status} /></td>
               <td className="px-4 py-3">
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex items-center justify-center gap-1">
                   {r.status === "pending" ? (
                     <>
                       <button
@@ -219,6 +237,71 @@ function RegistrationsTab({ filter }: { filter: string }) {
           ))}
         </tbody>
       </table>
+
+      {/* Proof of enrollment preview modal */}
+      {proofPreview && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4"
+          onClick={() => setProofPreview(null)}
+          onKeyDown={(e) => e.key === "Escape" && setProofPreview(null)}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Proof of Enrollment</h3>
+                <p className="text-xs text-gray-500">{proofPreview.name}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={proofPreview.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Open
+                </a>
+                <button
+                  onClick={() => setProofPreview(null)}
+                  className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+              <img
+                src={proofPreview.url}
+                alt="Proof of Enrollment"
+                className="max-h-96 w-full object-contain"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                  (e.currentTarget.nextSibling as HTMLElement | null)?.removeAttribute("style");
+                }}
+              />
+              <div style={{ display: "none" }} className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
+                <FileImage className="h-10 w-10 text-gray-300" />
+                <p className="text-sm">Preview not available for this file type.</p>
+                <a
+                  href={proofPreview.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 rounded-lg bg-maroon-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-800"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open File
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {registrationToDelete && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
@@ -354,6 +437,16 @@ function RenewalsTab({ filter }: { filter: string }) {
 
 // ── Surveys Tab ───────────────────────────────────────────────────────────────
 
+function StarDisplay({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center justify-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star key={n} className={cn("h-3.5 w-3.5", n <= Math.round(rating) ? "fill-gold-400 text-gold-400" : "text-gray-200")} />
+      ))}
+    </div>
+  );
+}
+
 function SurveysTab() {
   const rows = useQuery(api.forms.listSurveys, {});
   const deleteSurvey = useMutation(api.forms.deleteSurvey);
@@ -365,40 +458,67 @@ function SurveysTab() {
     return <p className="py-12 text-center text-sm text-gray-400">No surveys submitted yet.</p>;
 
   return (
-    <div className="relative divide-y divide-gray-100">
-      {rows.map((r) => {
-        const avg = r.ratings.length > 0 ? r.ratings.reduce((s, x) => s + x.rating, 0) / r.ratings.length : 0;
-        return (
-          <div key={r._id} className="px-4 py-4 hover:bg-gray-50">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <Star key={n} className={cn("h-4 w-4", n <= Math.round(avg) ? "fill-gold-400 text-gold-400" : "text-gray-200")} />
-                  ))}
-                </div>
-                <span className="text-sm font-medium text-gray-700">{avg.toFixed(1)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">{formatDate(r.createdAt)}</span>
-                <button
-                  onClick={() => setSurveyToDelete(r._id as Id<"surveys">)}
-                  className="rounded p-1.5 text-red-600 hover:bg-red-50"
-                  title="Delete"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <div className="mt-2 grid gap-1 text-xs text-gray-500 sm:grid-cols-2 md:grid-cols-3">
-              {r.ratings.map((x) => (
-                <span key={x.criterion}>{x.criterion}: <strong>{x.rating}/5</strong></span>
-              ))}
-            </div>
-            {r.comments && <p className="mt-2 text-sm text-gray-600 italic">&ldquo;{r.comments}&rdquo;</p>}
-          </div>
-        );
-      })}
+    <div className="relative overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-200 bg-gray-50">
+            <th className="px-4 py-3 text-left font-medium text-gray-600">Respondent</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600 hidden sm:table-cell">Source</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600">Avg. Rating</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600 hidden md:table-cell">Comments</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600 hidden sm:table-cell">Date</th>
+            <th className="px-4 py-3 text-center font-medium text-gray-600">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {rows.map((r) => {
+            const avg = r.ratings.length > 0 ? r.ratings.reduce((s, x) => s + x.rating, 0) / r.ratings.length : 0;
+            return (
+              <tr key={r._id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-900">
+                  {r.respondent ?? <span className="text-gray-400 font-normal italic">Anonymous</span>}
+                </td>
+                <td className="px-4 py-3 text-center hidden sm:table-cell">
+                  {r.source ? (
+                    <span className={cn(
+                      "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+                      r.source === "AI Chatbot" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                    )}>
+                      {r.source}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300 text-xs">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <StarDisplay rating={avg} />
+                    <span className="text-xs text-gray-500">{avg.toFixed(1)}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-center hidden md:table-cell">
+                  {r.comments
+                    ? <span className="text-gray-600 italic text-xs max-w-48 line-clamp-2 inline-block text-left">&ldquo;{r.comments}&rdquo;</span>
+                    : <span className="text-gray-300 text-xs">—</span>
+                  }
+                </td>
+                <td className="px-4 py-3 text-center text-xs text-gray-500 hidden sm:table-cell">{formatDate(r.createdAt)}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      onClick={() => setSurveyToDelete(r._id as Id<"surveys">)}
+                      className="rounded p-1.5 text-red-600 hover:bg-red-50"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
 
       {surveyToDelete && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">

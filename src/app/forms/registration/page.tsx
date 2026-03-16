@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { UserPlus, CheckCircle, Loader2 } from "lucide-react";
+import { UserPlus, CheckCircle, Loader2, UploadCloud, X, FileImage } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -13,6 +13,7 @@ export default function RegistrationPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [proofError, setProofError] = useState("");
 
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -23,12 +24,18 @@ export default function RegistrationPage() {
   const [yearLevel, setYearLevel] = useState("");
   const [contact, setContact] = useState("");
 
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const departments = useQuery(api.programs.listDepartments, {});
   const programs = useQuery(
     api.programs.listPrograms,
     departmentId ? { departmentId } : "skip",
   );
   const submitRegistration = useMutation(api.forms.submitRegistration);
+  const generateUploadUrl = useMutation(api.forms.generateUploadUrl);
 
   const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selected = departments?.find((d) => d._id === e.target.value);
@@ -37,11 +44,65 @@ export default function RegistrationPage() {
     setProgram("");
   };
 
+  const handleFileSelect = (file: File) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      setProofError("Only JPG, PNG, WEBP, or PDF files are accepted.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setProofError("File must be smaller than 5 MB.");
+      return;
+    }
+    setProofError("");
+    setProofFile(file);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (e) => setProofPreview(e.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setProofPreview(null);
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  }, []);
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
     try {
+      if (!proofFile) {
+        setProofError("Proof of Enrollment is required.");
+        setIsSubmitting(false);
+        return;
+      }
+      let enrollmentProof: Id<"_storage"> | undefined;
+
+      if (proofFile) {
+        const uploadUrl = await generateUploadUrl();
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": proofFile.type },
+          body: proofFile,
+        });
+        if (!result.ok) throw new Error("File upload failed. Please try again.");
+        const { storageId } = await result.json();
+        enrollmentProof = storageId as Id<"_storage">;
+      }
+
       await submitRegistration({
         name,
         studentId,
@@ -50,6 +111,7 @@ export default function RegistrationPage() {
         program: program || undefined,
         yearLevel,
         contact,
+        enrollmentProof,
       });
       setSubmitted(true);
     } catch (err) {
@@ -69,6 +131,8 @@ export default function RegistrationPage() {
     setProgram("");
     setYearLevel("");
     setContact("");
+    setProofFile(null);
+    setProofPreview(null);
   };
 
   return (
@@ -125,28 +189,24 @@ export default function RegistrationPage() {
                 </select>
               </div>
 
-              {/* Program — always visible, muted/disabled until department is selected */}
+              {/* Program */}
               <div>
                 <label htmlFor="program" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Program
                 </label>
                 <select
                   id="program"
-                  required={!!departmentId}
+                  required
                   value={program}
                   onChange={(e) => setProgram(e.target.value)}
                   disabled={!departmentId || programs === undefined}
                   className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
                 >
                   {!departmentId && (
-                    <option value="">
-                      Select department first
-                    </option>
+                    <option value="">Select department first</option>
                   )}
                   {departmentId && programs === undefined && (
-                    <option value="">
-                      Loading programs…
-                    </option>
+                    <option value="">Loading programs…</option>
                   )}
                   {departmentId && programs !== undefined && (
                     <>
@@ -174,7 +234,89 @@ export default function RegistrationPage() {
                     <option>Faculty / Staff</option>
                   </select>
                 </div>
-                <Input label="Contact Number" type="tel" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="+63 912 345 6789" required />
+                <Input
+                  label="Contact Number"
+                  type="tel"
+                  value={contact}
+                  onChange={(e) => {
+                    const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    setContact(digitsOnly);
+                  }}
+                  placeholder="09123456789"
+                  maxLength={11}
+                  pattern="^09\d{9}$"
+                  title="Please enter an 11-digit mobile number starting with 09 (e.g. 09123456789)."
+                  required
+                />
+              </div>
+
+              {/* Proof of Enrollment Upload */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Proof of Enrollment
+                  <span className="ml-1 text-xs font-normal text-gray-400">(required — JPG, PNG, PDF · max 5 MB)</span>
+                </label>
+
+                {proofFile ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    {proofPreview ? (
+                      <img src={proofPreview} alt="Preview" className="h-14 w-14 rounded object-cover border border-gray-200 shrink-0" />
+                    ) : (
+                      <div className="flex h-14 w-14 items-center justify-center rounded bg-maroon-50 shrink-0">
+                        <FileImage className="h-7 w-7 text-maroon-600" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-gray-800">{proofFile.name}</p>
+                      <p className="text-xs text-gray-500">{(proofFile.size / 1024).toFixed(0)} KB</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setProofFile(null); setProofPreview(null); }}
+                      className="rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+                      title="Remove file"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+                    role="button"
+                    tabIndex={0}
+                    className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors ${
+                      isDragging
+                        ? "border-maroon-400 bg-maroon-50"
+                        : "border-gray-300 bg-gray-50 hover:border-maroon-400 hover:bg-maroon-50/40"
+                    }`}
+                  >
+                    <UploadCloud className={`h-8 w-8 ${isDragging ? "text-maroon-500" : "text-gray-400"}`} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Drag & drop your file here, or <span className="text-maroon-700 underline">browse</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-400">Certificate of Registration, enrollment form, or similar document</p>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileSelect(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </div>
+                )}
+                {proofError && (
+                  <p className="mt-1 text-xs text-red-600">{proofError}</p>
+                )}
               </div>
 
               <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>

@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   XCircle,
   ChevronLeft,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/stores/chatStore";
@@ -86,62 +87,72 @@ const PROGRAMS: Record<string, string[]> = {
 };
 
 
-function formatBotContent(content: string): React.ReactNode[] {
-  const parts: React.ReactNode[] = [];
-  const lines = content.split("\n");
+const URL_REGEX = /https?:\/\/[^\s,;)>\]"']+/g;
 
-  lines.forEach((line, lineIdx) => {
-    const segments: React.ReactNode[] = [];
-    let remaining = line;
-    let segKey = 0;
+function parseSegments(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let remaining = text;
+  let key = 0;
 
-    while (remaining.length > 0) {
-      const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
-      const italicMatch = remaining.match(/\*(.+?)\*/);
+  while (remaining.length > 0) {
+    // Find earliest match among bold, italic, and URL
+    const boldMatch = new RegExp(/\*\*(.+?)\*\*/).exec(remaining);
+    const italicMatch = new RegExp(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/).exec(remaining);
+    URL_REGEX.lastIndex = 0;
+    const urlMatch = URL_REGEX.exec(remaining);
 
-      const match =
-        boldMatch && italicMatch
-          ? boldMatch.index! <= italicMatch.index!
-            ? boldMatch
-            : italicMatch
-          : boldMatch || italicMatch;
-
-      if (!match || match.index === undefined) {
-        segments.push(<span key={segKey++}>{remaining}</span>);
-        break;
-      }
-
-      if (match.index > 0) {
-        segments.push(
-          <span key={segKey++}>{remaining.slice(0, match.index)}</span>,
-        );
-      }
-
-      const isBold = match[0].startsWith("**");
-      segments.push(
-        isBold ? (
-          <strong key={segKey++} className="font-semibold">
-            {match[1]}
-          </strong>
-        ) : (
-          <em key={segKey++} className="italic">
-            {match[1]}
-          </em>
-        ),
-      );
-
-      remaining = remaining.slice(match.index + match[0].length);
+    const candidates = [boldMatch, italicMatch, urlMatch].filter(Boolean) as RegExpExecArray[];
+    if (candidates.length === 0) {
+      nodes.push(<span key={key++}>{remaining}</span>);
+      break;
     }
 
-    parts.push(
-      <span key={lineIdx}>
-        {segments}
-        {lineIdx < lines.length - 1 && <br />}
-      </span>,
-    );
-  });
+    const earliest = candidates.reduce((a, b) => (a.index <= b.index ? a : b), candidates[0]);
 
-  return parts;
+    if (earliest.index > 0) {
+      nodes.push(<span key={key++}>{remaining.slice(0, earliest.index)}</span>);
+    }
+
+    if (earliest === urlMatch) {
+      const url = earliest[0];
+      nodes.push(
+        <a
+          key={key++}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-maroon-700 hover:text-maroon-900 break-all transition-colors"
+        >
+          {url}
+        </a>,
+      );
+    } else if (earliest === boldMatch) {
+      nodes.push(
+        <strong key={key++} className="font-semibold">
+          {earliest[1]}
+        </strong>,
+      );
+    } else {
+      nodes.push(
+        <em key={key++} className="italic">
+          {earliest[1]}
+        </em>,
+      );
+    }
+
+    remaining = remaining.slice(earliest.index + earliest[0].length);
+  }
+
+  return nodes;
+}
+
+function formatBotContent(content: string): React.ReactNode[] {
+  return content.split("\n").map((line, lineIdx, arr) => (
+    <span key={lineIdx}>
+      {parseSegments(line)}
+      {lineIdx < arr.length - 1 && <br />}
+    </span>
+  ));
 }
 
 export default function ChatWidget() {
@@ -167,6 +178,14 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const toastTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
+  const [ratingRespondent, setRatingRespondent] = useState<string | undefined>(undefined);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [ratingHover, setRatingHover] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [ratingDone, setRatingDone] = useState(false);
 
   const [toastMounted, setToastMounted] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
@@ -336,20 +355,57 @@ export default function ChatWidget() {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
+  const doLogout = () => {
     resetVerification();
-    setFormData({
-      name: "",
-      studentNumber: "",
-      program: "",
-      department: "",
-    });
+    setFormData({ name: "", studentNumber: "", program: "", department: "" });
     setHasLibraryAccount(null);
     setShowLogoutModal(false);
+    setShowRatingPrompt(false);
+    setRatingRespondent(undefined);
+    setSelectedRating(0);
+    setRatingHover(0);
+    setRatingComment("");
+    setRatingDone(false);
+  };
+
+  // If user had a real conversation, show the rating screen first; otherwise sign out directly.
+  const confirmLogout = () => {
+    const userMessages = messages.filter((m) => m.role === "user");
+    if (userMessages.length > 0) {
+      // Capture the name NOW before the store is cleared
+      setRatingRespondent(verifiedStudent?.name || undefined);
+      setShowLogoutModal(false);
+      setShowRatingPrompt(true);
+    } else {
+      doLogout();
+    }
   };
 
   const cancelLogout = () => {
     setShowLogoutModal(false);
+  };
+
+  const handleRatingSubmit = async () => {
+    if (selectedRating === 0) return;
+    setIsSubmittingRating(true);
+    try {
+      await convexHttp.mutation(api.forms.submitSurvey, {
+        respondent: ratingRespondent,
+        source: "AI Chatbot",
+        ratings: [{ criterion: "AI chatbot usefulness", rating: selectedRating }],
+        comments: ratingComment.trim() || undefined,
+      });
+    } catch {
+      // Silently fail — don't block logout
+    } finally {
+      setIsSubmittingRating(false);
+      setRatingDone(true);
+      setTimeout(() => doLogout(), 1600);
+    }
+  };
+
+  const handleRatingSkip = () => {
+    doLogout();
   };
 
   if (!isOpen) {
@@ -899,6 +955,97 @@ export default function ChatWidget() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Post-chat Rating Overlay */}
+      {showRatingPrompt && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white px-6 py-8 animate-fade-in-up">
+          {ratingDone ? (
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+              </div>
+              <p className="text-base font-semibold text-gray-900">Thank you for your feedback!</p>
+              <p className="text-sm text-gray-400">Signing you out…</p>
+            </div>
+          ) : (
+            <>
+              {/* Avatar + heading */}
+              <div className="mb-5 flex flex-col items-center gap-3 text-center">
+                <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-maroon-200">
+                  <Image src="/rose.png" alt="ROSe" fill sizes="56px" className="object-cover object-top" />
+                </div>
+                <div>
+                  <p className="text-base font-bold text-gray-900">Rate your experience</p>
+                  <p className="mt-0.5 text-sm text-gray-500">How was your chat with ROSe?</p>
+                </div>
+              </div>
+
+              {/* Stars */}
+              <div className="mb-5 flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setSelectedRating(n)}
+                    onMouseEnter={() => setRatingHover(n)}
+                    onMouseLeave={() => setRatingHover(0)}
+                    className="transition-transform hover:scale-110 focus:outline-none"
+                    aria-label={`${n} star`}
+                  >
+                    <Star
+                      className={cn(
+                        "h-9 w-9 transition-colors",
+                        n <= (ratingHover || selectedRating)
+                          ? "fill-amber-400 text-amber-400"
+                          : "fill-gray-200 text-gray-200",
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              {/* Star label */}
+              <p className="mb-4 h-4 text-xs font-medium text-gray-400">
+                {(ratingHover || selectedRating) === 1 && "Poor"}
+                {(ratingHover || selectedRating) === 2 && "Fair"}
+                {(ratingHover || selectedRating) === 3 && "Good"}
+                {(ratingHover || selectedRating) === 4 && "Very Good"}
+                {(ratingHover || selectedRating) === 5 && "Excellent!"}
+              </p>
+
+              {/* Optional comment */}
+              {selectedRating > 0 && (
+                <textarea
+                  value={ratingComment}
+                  onChange={(e) => setRatingComment(e.target.value)}
+                  placeholder="Additional comments (optional)…"
+                  rows={2}
+                  className="mb-4 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-maroon-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
+                />
+              )}
+
+              {/* Actions */}
+              <div className="flex w-full flex-col gap-2">
+                <button
+                  onClick={handleRatingSubmit}
+                  disabled={selectedRating === 0 || isSubmittingRating}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-maroon-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-maroon-900 disabled:opacity-40"
+                >
+                  {isSubmittingRating && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Send Feedback
+                </button>
+                <button
+                  onClick={handleRatingSkip}
+                  disabled={isSubmittingRating}
+                  className="w-full rounded-xl px-4 py-2 text-sm text-gray-400 transition-colors hover:text-gray-600"
+                >
+                  Skip
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

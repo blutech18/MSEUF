@@ -38,6 +38,7 @@ function RatingRow({ label, value, onChange }: { label: string; value: number; o
 }
 
 export default function SatisfactionSurveyPage() {
+  const [name, setName] = useState("");
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [comments, setComments] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -52,7 +53,12 @@ export default function SatisfactionSurveyPage() {
     setError("");
     try {
       const ratingsArray = CRITERIA.map((c) => ({ criterion: c, rating: ratings[c] || 0 }));
-      await submitSurvey({ ratings: ratingsArray, comments: comments || undefined });
+      await submitSurvey({
+        respondent: name.trim() || undefined,
+        source: "Satisfaction Survey",
+        ratings: ratingsArray,
+        comments: comments || undefined,
+      });
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
@@ -63,6 +69,7 @@ export default function SatisfactionSurveyPage() {
 
   const handleReset = () => {
     setSubmitted(false);
+    setName("");
     setRatings({});
     setComments("");
   };
@@ -93,6 +100,20 @@ export default function SatisfactionSurveyPage() {
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>
               )}
+
+              <div>
+                <label htmlFor="respondent-name" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Your Name <span className="text-xs font-normal text-gray-400">(optional)</span>
+                </label>
+                <input
+                  id="respondent-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Juan Dela Cruz"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
+                />
+              </div>
 
               <p className="text-sm text-gray-600">Please rate the following aspects of our library services (1 = Poor, 5 = Excellent):</p>
 

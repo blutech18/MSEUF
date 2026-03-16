@@ -1,6 +1,15 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 
+// ── File storage ───────────────────────────────────────────────────────────────
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
 // ── Submit mutations (public — student-facing) ───────────────────────────────
 
 export const submitAppointment = mutation({
@@ -30,6 +39,7 @@ export const submitRegistration = mutation({
     program: v.optional(v.string()),
     yearLevel: v.string(),
     contact: v.string(),
+    enrollmentProof: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     return ctx.db.insert("registrations", {
@@ -60,11 +70,15 @@ export const submitBookRenewal = mutation({
 
 export const submitSurvey = mutation({
   args: {
+    respondent: v.optional(v.string()),
+    source: v.optional(v.string()),
     ratings: v.array(v.object({ criterion: v.string(), rating: v.number() })),
     comments: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return ctx.db.insert("surveys", {
+      respondent: args.respondent || undefined,
+      source: args.source || undefined,
       ratings: args.ratings,
       comments: args.comments || undefined,
       createdAt: Date.now(),
@@ -102,7 +116,15 @@ export const listRegistrations = query({
     } else {
       rows = await ctx.db.query("registrations").collect();
     }
-    return rows.sort((a, b) => b.createdAt - a.createdAt);
+    const sorted = rows.sort((a, b) => b.createdAt - a.createdAt);
+    return await Promise.all(
+      sorted.map(async (r) => ({
+        ...r,
+        enrollmentProofUrl: r.enrollmentProof
+          ? await ctx.storage.getUrl(r.enrollmentProof)
+          : null,
+      }))
+    );
   },
 });
 

@@ -162,6 +162,7 @@ export default defineSchema({
     program: v.optional(v.string()),
     yearLevel: v.string(),
     contact: v.string(),
+    enrollmentProof: v.optional(v.id("_storage")),
     status: v.string(),
     createdAt: v.number(),
   })
@@ -183,6 +184,8 @@ export default defineSchema({
     .index("by_createdAt", ["createdAt"]),
 
   surveys: defineTable({
+    respondent: v.optional(v.string()),
+    source: v.optional(v.string()),
     ratings: v.array(v.object({ criterion: v.string(), rating: v.number() })),
     comments: v.optional(v.string()),
     createdAt: v.number(),
