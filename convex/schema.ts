@@ -159,13 +159,15 @@ export default defineSchema({
     studentId: v.string(),
     email: v.string(),
     department: v.string(),
+    program: v.optional(v.string()),
     yearLevel: v.string(),
     contact: v.string(),
     status: v.string(),
     createdAt: v.number(),
   })
     .index("by_status", ["status"])
-    .index("by_createdAt", ["createdAt"]),
+    .index("by_createdAt", ["createdAt"])
+    .index("by_studentId", ["studentId"]),
 
   bookRenewals: defineTable({
     name: v.string(),

@@ -15,12 +15,19 @@ import {
   LogOut,
   GraduationCap,
   ExternalLink,
+  CheckCircle2,
+  XCircle,
+  ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/stores/chatStore";
-import { useConvex } from "convex/react";
+import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../convex/_generated/api";
 import type { ChatMessage } from "@/types";
+
+// Fresh HTTP client — bypasses the React subscription cache so deleted/
+// re-created students are always fetched from the latest Convex state.
+const convexHttp = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 const QUICK_ACTIONS = [
   "Search for a book",
@@ -78,7 +85,6 @@ const PROGRAMS: Record<string, string[]> = {
   ],
 };
 
-const YEAR_LEVELS = [1, 2, 3, 4, 5];
 
 function formatBotContent(content: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
@@ -146,7 +152,6 @@ export default function ChatWidget() {
     isLoading,
     verifiedStudent,
     isVerifying,
-    verificationError,
     toggleChat,
     closeChat,
     setInputValue,
@@ -155,11 +160,9 @@ export default function ChatWidget() {
     initSession,
     setVerifiedStudent,
     setVerifying,
-    setVerificationError,
     resetVerification,
   } = useChatStore();
 
-  const convex = useConvex();
   const [isExpanded, setIsExpanded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -168,14 +171,17 @@ export default function ChatWidget() {
   const [toastMounted, setToastMounted] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastName, setToastName] = useState("");
+  const [errToastMounted, setErrToastMounted] = useState(false);
+  const [errToastVisible, setErrToastVisible] = useState(false);
+  const [errToastMsg, setErrToastMsg] = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [hasLibraryAccount, setHasLibraryAccount] = useState<boolean | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
     studentNumber: "",
     program: "",
     department: "",
-    year: 0,
   });
 
   useEffect(() => {
@@ -195,28 +201,34 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const showErrorToast = useCallback((msg: string) => {
+    setErrToastMsg(msg);
+    setErrToastMounted(true);
+    const t1 = setTimeout(() => setErrToastVisible(true), 10);
+    const t2 = setTimeout(() => setErrToastVisible(false), 3200);
+    const t3 = setTimeout(() => { setErrToastMounted(false); setErrToastMsg(""); }, 3700);
+    toastTimers.current.push(t1, t2, t3);
+  }, []);
+
   const handleVerify = useCallback(async () => {
     if (
       !formData.name.trim() ||
       !formData.studentNumber.trim() ||
       !formData.program ||
-      !formData.department ||
-      !formData.year
+      !formData.department
     ) {
-      setVerificationError("Please fill in all fields.");
+      showErrorToast("Please fill in all fields.");
       return;
     }
 
     setVerifying(true);
-    setVerificationError(null);
 
     try {
-      const result = await convex.query(api.students.verify, {
+      const result = await convexHttp.query(api.students.verify, {
         studentNumber: formData.studentNumber.trim(),
         name: formData.name.trim(),
         program: formData.program,
         department: formData.department,
-        year: formData.year,
       });
 
       if (result.verified && result.student) {
@@ -227,14 +239,14 @@ export default function ChatWidget() {
         const t1 = setTimeout(() => setToastVisible(true), 10);
         const t2 = setTimeout(() => setToastVisible(false), 2700);
         const t3 = setTimeout(() => setToastMounted(false), 3200);
-        toastTimers.current = [t1, t2, t3];
+        toastTimers.current.push(t1, t2, t3);
       } else {
-        setVerificationError(
+        showErrorToast(
           result.reason || "Verification failed. Please check your details.",
         );
       }
     } catch {
-      setVerificationError(
+      showErrorToast(
         "Unable to verify. Please try again or contact the library.",
       );
     } finally {
@@ -242,11 +254,10 @@ export default function ChatWidget() {
     }
   }, [
     formData,
-    convex,
     setVerifiedStudent,
     setVerifying,
-    setVerificationError,
     initSession,
+    showErrorToast,
   ]);
 
   const handleSend = async () => {
@@ -332,8 +343,8 @@ export default function ChatWidget() {
       studentNumber: "",
       program: "",
       department: "",
-      year: 0,
     });
+    setHasLibraryAccount(null);
     setShowLogoutModal(false);
   };
 
@@ -417,37 +428,118 @@ export default function ChatWidget() {
       {/* Student Verification or Chat */}
       {!verifiedStudent ? (
         <div className="flex flex-1 flex-col overflow-y-auto bg-white p-5 sm:p-6">
-          <div className="flex flex-col flex-1 min-h-0">
-            <div className="mb-6 shrink-0 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-maroon-50">
-                <ShieldCheck className="h-6 w-6 text-maroon-700" />
-              </div>
-              <h3 className="font-heading text-lg font-bold text-gray-900">
-                Student Verification
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Verify your identity to chat with ROSe
-              </p>
-            </div>
 
-            <div className="flex flex-col flex-1">
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-700">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Juan Dela Cruz"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-maroon-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
-                  />
+          {/* ── Step 1: Library account checklist ── */}
+          {hasLibraryAccount === null && (
+            <div className="flex flex-col flex-1 items-center justify-center text-center gap-6">
+              <div>
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-maroon-50">
+                  <ShieldCheck className="h-6 w-6 text-maroon-700" />
                 </div>
+                <h3 className="font-heading text-lg font-bold text-gray-900">
+                  Before we begin…
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Do you already have a library account?
+                </p>
+              </div>
+              <div className="flex w-full flex-col gap-3">
+                <button
+                  onClick={() => setHasLibraryAccount(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-maroon-700 bg-maroon-800 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-maroon-900"
+                >
+                  <CheckCircle2 className="h-5 w-5" />
+                  Yes, I have a library account
+                </button>
+                <button
+                  onClick={() => setHasLibraryAccount(false)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  <XCircle className="h-5 w-5 text-gray-400" />
+                  No, not yet
+                </button>
+              </div>
+            </div>
+          )}
 
-                <div className="grid grid-cols-2 gap-3">
+          {/* ── Step 2a: No library account — registration message ── */}
+          {hasLibraryAccount === false && (
+            <div className="flex flex-col flex-1 items-center justify-center text-center gap-5">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">
+                <BookOpen className="h-7 w-7 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-heading text-lg font-bold text-gray-900">
+                  Library Account Required
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                  You need a library account to use ROSe. Please register first
+                  by visiting the library or filling out the online registration
+                  form.
+                </p>
+              </div>
+              <a
+                href="/forms/registration"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-maroon-800 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-maroon-900"
+              >
+                <GraduationCap className="h-4 w-4" />
+                Register for a Library Account
+              </a>
+              <button
+                onClick={() => setHasLibraryAccount(null)}
+                className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" /> Go back
+              </button>
+            </div>
+          )}
+
+          {/* ── Step 2b: Has library account — verification form ── */}
+          {hasLibraryAccount === true && (
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="mb-5 shrink-0">
+                <div className="relative flex justify-center">
+                  <button
+                    onClick={() => {
+                      setHasLibraryAccount(null);
+                    }}
+                    className="absolute left-0 top-0 flex h-12 items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" /> Back
+                  </button>
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-maroon-50">
+                    <ShieldCheck className="h-6 w-6 text-maroon-700" />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <h3 className="font-heading text-lg font-bold text-gray-900">
+                    Student Verification
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Verify your identity to chat with ROSe
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col flex-1">
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-700">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      placeholder="Juan Dela Cruz"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-maroon-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
+                    />
+                  </div>
+
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-700">
                       Student No.
@@ -465,110 +557,80 @@ export default function ChatWidget() {
                       className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-maroon-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
                     />
                   </div>
+
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-700">
-                      Year Level
+                      Department
                     </label>
                     <select
-                      value={formData.year || ""}
+                      value={formData.department}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          year: parseInt(e.target.value) || 0,
+                          department: e.target.value,
+                          program: "",
                         })
                       }
                       className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-colors focus:border-maroon-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
                     >
-                      <option value="">Select year</option>
-                      {YEAR_LEVELS.map((y) => (
-                        <option key={y} value={y}>
-                          {y === 5
-                            ? "5th Year"
-                            : `${y}${y === 1 ? "st" : y === 2 ? "nd" : y === 3 ? "rd" : "th"} Year`}
+                      <option value="">Select department</option>
+                      {DEPARTMENTS.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
                         </option>
                       ))}
                     </select>
                   </div>
-                </div>
 
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-700">
-                    Department
-                  </label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        department: e.target.value,
-                        program: "",
-                      })
-                    }
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-colors focus:border-maroon-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
-                  >
-                    <option value="">Select department</option>
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-700">
+                      Program
+                    </label>
+                    <select
+                      value={formData.program}
+                      onChange={(e) =>
+                        setFormData({ ...formData, program: e.target.value })
+                      }
+                      disabled={!formData.department}
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-colors focus:border-maroon-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-maroon-500/20 disabled:opacity-50"
+                    >
+                      <option value="">
+                        {formData.department
+                          ? "Select program"
+                          : "Select department first"}
                       </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-700">
-                    Program
-                  </label>
-                  <select
-                    value={formData.program}
-                    onChange={(e) =>
-                      setFormData({ ...formData, program: e.target.value })
-                    }
-                    disabled={!formData.department}
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-colors focus:border-maroon-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-maroon-500/20 disabled:opacity-50"
-                  >
-                    <option value="">
-                      {formData.department
-                        ? "Select program"
-                        : "Select department first"}
-                    </option>
-                    {formData.department &&
-                      PROGRAMS[formData.department]?.map((p) => (
-                        <option key={p} value={p}>
-                          {p}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-8 shrink-0 flex flex-col gap-3 pb-1">
-                <button
-                  onClick={handleVerify}
-                  disabled={isVerifying}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-maroon-800 px-8 py-2.5 text-sm font-medium text-white transition-colors hover:bg-maroon-900 disabled:opacity-60"
-                >
-                  {isVerifying ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      <GraduationCap className="h-4 w-4" />
-                      Verify
-                    </>
-                  )}
-                </button>
-
-                {verificationError && (
-                  <div className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                    {verificationError}
+                      {formData.department &&
+                        PROGRAMS[formData.department]?.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                    </select>
                   </div>
-                )}
+                </div>
+
+                <div className="mt-8 shrink-0 pb-1">
+                  <button
+                    onClick={handleVerify}
+                    disabled={isVerifying}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-maroon-800 px-8 py-2.5 text-sm font-medium text-white transition-colors hover:bg-maroon-900 disabled:opacity-60"
+                  >
+                    {isVerifying ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <GraduationCap className="h-4 w-4" />
+                        Verify
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-1 flex-col overflow-hidden animate-fade-in-up">
@@ -769,7 +831,7 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {/* Toast notification */}
+      {/* Success toast */}
       {toastMounted && (
         <div className="pointer-events-none absolute top-20 right-4 z-50 flex justify-end">
           <div
@@ -787,6 +849,25 @@ export default function ChatWidget() {
                 Welcome, {toastName}!
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error toast */}
+      {errToastMounted && (
+        <div className="pointer-events-none absolute left-1/2 top-20 z-50 flex w-full max-w-xl -translate-x-1/2 justify-center px-4">
+          <div
+            className={cn(
+              "flex w-full items-center gap-2 rounded-xl bg-maroon-800 px-5 py-3 text-white shadow-xl transition-all duration-500",
+              errToastVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-2",
+            )}
+          >
+            <XCircle className="h-4 w-4 shrink-0 text-maroon-100" />
+            <p className="text-xs font-medium text-maroon-50 text-left w-full">
+              {errToastMsg}
+            </p>
           </div>
         </div>
       )}

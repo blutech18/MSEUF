@@ -7,9 +7,11 @@ export const verify = query({
     name: v.string(),
     program: v.string(),
     department: v.string(),
-    year: v.number(),
   },
   handler: async (ctx, args) => {
+    const norm = (s: string) => s.toLowerCase().trim();
+
+    // ── Primary: check the students table ────────────────────────────────────
     const student = await ctx.db
       .query("students")
       .withIndex("by_studentNumber", (q) =>
@@ -17,37 +19,63 @@ export const verify = query({
       )
       .first();
 
-    if (!student) return { verified: false, reason: "Student number not found" };
-    if (!student.isActive)
-      return { verified: false, reason: "Student is no longer enrolled" };
+    if (student) {
+      if (!student.isActive)
+        return { verified: false, reason: "Student is no longer enrolled" };
+      if (norm(student.name) !== norm(args.name))
+        return { verified: false, reason: "Name does not match records" };
+      if (norm(student.program) !== norm(args.program))
+        return { verified: false, reason: "Program does not match records" };
+      if (norm(student.department) !== norm(args.department))
+        return { verified: false, reason: "Department does not match records" };
 
-    const nameMatch =
-      student.name.toLowerCase().trim() === args.name.toLowerCase().trim();
-    const programMatch =
-      student.program.toLowerCase().trim() === args.program.toLowerCase().trim();
-    const departmentMatch =
-      student.department.toLowerCase().trim() ===
-      args.department.toLowerCase().trim();
-    const yearMatch = student.year === args.year;
+      return {
+        verified: true,
+        student: {
+          _id: student._id,
+          studentNumber: student.studentNumber,
+          name: student.name,
+          program: student.program,
+          department: student.department,
+          year: student.year,
+        },
+      };
+    }
 
-    if (!nameMatch)
+    // ── Fallback: check registration form submissions ─────────────────────────
+    // Allows students who submitted the online registration form to access the
+    // chatbot even before being manually added to the students table.
+    const registration = await ctx.db
+      .query("registrations")
+      .withIndex("by_studentId", (q) =>
+        q.eq("studentId", args.studentNumber)
+      )
+      .first();
+
+    if (!registration)
+      return { verified: false, reason: "Student number not found. Please register at the library or submit the online registration form first." };
+
+    if (registration.status === "rejected")
+      return { verified: false, reason: "Your registration was not approved. Please contact the library." };
+
+    if (norm(registration.name) !== norm(args.name))
       return { verified: false, reason: "Name does not match records" };
-    if (!programMatch)
-      return { verified: false, reason: "Program does not match records" };
-    if (!departmentMatch)
+
+    if (norm(registration.department) !== norm(args.department))
       return { verified: false, reason: "Department does not match records" };
-    if (!yearMatch)
-      return { verified: false, reason: "Year does not match records" };
+
+    if (registration.program && norm(registration.program) !== norm(args.program))
+      return { verified: false, reason: "Program does not match records" };
 
     return {
       verified: true,
       student: {
-        _id: student._id,
-        studentNumber: student.studentNumber,
-        name: student.name,
-        program: student.program,
-        department: student.department,
-        year: student.year,
+        _id: registration._id,
+        studentNumber: registration.studentId,
+        name: registration.name,
+        program: registration.program ?? args.program,
+        department: registration.department,
+        year: 0,
       },
     };
   },

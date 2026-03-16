@@ -7,6 +7,7 @@ import Input from "@/components/ui/Input";
 import { UserPlus, CheckCircle, Loader2 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 export default function RegistrationPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -17,18 +18,39 @@ export default function RegistrationPage() {
   const [studentId, setStudentId] = useState("");
   const [email, setEmail] = useState("");
   const [department, setDepartment] = useState("");
+  const [departmentId, setDepartmentId] = useState<Id<"departments"> | null>(null);
+  const [program, setProgram] = useState("");
   const [yearLevel, setYearLevel] = useState("");
   const [contact, setContact] = useState("");
 
   const departments = useQuery(api.programs.listDepartments, {});
+  const programs = useQuery(
+    api.programs.listPrograms,
+    departmentId ? { departmentId } : "skip",
+  );
   const submitRegistration = useMutation(api.forms.submitRegistration);
+
+  const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = departments?.find((d) => d._id === e.target.value);
+    setDepartment(selected?.name ?? "");
+    setDepartmentId(selected?._id ?? null);
+    setProgram("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
     try {
-      await submitRegistration({ name, studentId, email, department, yearLevel, contact });
+      await submitRegistration({
+        name,
+        studentId,
+        email,
+        department,
+        program: program || undefined,
+        yearLevel,
+        contact,
+      });
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
@@ -43,6 +65,8 @@ export default function RegistrationPage() {
     setStudentId("");
     setEmail("");
     setDepartment("");
+    setDepartmentId(null);
+    setProgram("");
     setYearLevel("");
     setContact("");
   };
@@ -78,18 +102,65 @@ export default function RegistrationPage() {
                 <Input label="Full Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Juan Dela Cruz" required />
                 <Input label="Student / Employee ID" value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="2024-00001" required />
               </div>
+
               <Input label="Email Address" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="juan@mseuf.edu.ph" required />
+
+              {/* Department */}
+              <div>
+                <label htmlFor="college" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  College / Department
+                </label>
+                <select
+                  id="college"
+                  required
+                  value={departmentId ?? ""}
+                  onChange={handleDepartmentChange}
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
+                >
+                  <option value="">Select department</option>
+                  {(departments ?? []).map((d) => (
+                    <option key={d._id} value={d._id}>{d.name}</option>
+                  ))}
+                  <option value="faculty">Faculty / Staff</option>
+                </select>
+              </div>
+
+              {/* Program — always visible, muted/disabled until department is selected */}
+              <div>
+                <label htmlFor="program" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Program
+                </label>
+                <select
+                  id="program"
+                  required={!!departmentId}
+                  value={program}
+                  onChange={(e) => setProgram(e.target.value)}
+                  disabled={!departmentId || programs === undefined}
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20"
+                >
+                  {!departmentId && (
+                    <option value="">
+                      Select department first
+                    </option>
+                  )}
+                  {departmentId && programs === undefined && (
+                    <option value="">
+                      Loading programs…
+                    </option>
+                  )}
+                  {departmentId && programs !== undefined && (
+                    <>
+                      <option value="">Select program</option>
+                      {programs.map((p) => (
+                        <option key={p._id} value={p.name}>{p.name}</option>
+                      ))}
+                    </>
+                  )}
+                </select>
+              </div>
+
+              {/* Year Level & Contact */}
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="college" className="mb-1.5 block text-sm font-medium text-gray-700">College / Department</label>
-                  <select id="college" required value={department} onChange={(e) => setDepartment(e.target.value)} className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20">
-                    <option value="">Select</option>
-                    {(departments ?? []).map((d) => (
-                      <option key={d._id} value={d.name}>{d.name}</option>
-                    ))}
-                    <option>Faculty / Staff</option>
-                  </select>
-                </div>
                 <div>
                   <label htmlFor="year" className="mb-1.5 block text-sm font-medium text-gray-700">Year Level</label>
                   <select id="year" required value={yearLevel} onChange={(e) => setYearLevel(e.target.value)} className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-maroon-500 focus:outline-none focus:ring-2 focus:ring-maroon-500/20">
@@ -103,8 +174,8 @@ export default function RegistrationPage() {
                     <option>Faculty / Staff</option>
                   </select>
                 </div>
+                <Input label="Contact Number" type="tel" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="+63 912 345 6789" required />
               </div>
-              <Input label="Contact Number" type="tel" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="+63 912 345 6789" required />
 
               <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

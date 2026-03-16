@@ -27,6 +27,7 @@ export const submitRegistration = mutation({
     studentId: v.string(),
     email: v.string(),
     department: v.string(),
+    program: v.optional(v.string()),
     yearLevel: v.string(),
     contact: v.string(),
   },
@@ -167,5 +168,35 @@ export const updateRenewalStatus = mutation({
   args: { id: v.id("bookRenewals"), status: v.string() },
   handler: async (ctx, { id, status }) => {
     await ctx.db.patch(id, { status });
+  },
+});
+
+// ── Dashboard mutations (deletes) ──────────────────────────────────────────────
+
+export const deleteAppointment = mutation({
+  args: { id: v.id("appointments") },
+  handler: async (ctx, { id }) => {
+    await ctx.db.delete(id);
+  },
+});
+
+export const deleteRegistration = mutation({
+  args: { id: v.id("registrations") },
+  handler: async (ctx, { id }) => {
+    await ctx.db.delete(id);
+  },
+});
+
+export const deleteRenewal = mutation({
+  args: { id: v.id("bookRenewals") },
+  handler: async (ctx, { id }) => {
+    await ctx.db.delete(id);
+  },
+});
+
+export const deleteSurvey = mutation({
+  args: { id: v.id("surveys") },
+  handler: async (ctx, { id }) => {
+    await ctx.db.delete(id);
   },
 });

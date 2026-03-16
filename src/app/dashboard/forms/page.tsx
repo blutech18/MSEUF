@@ -11,6 +11,7 @@ import {
   Check,
   X,
   Clock,
+  Trash2,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -53,6 +54,8 @@ function formatDate(ts: number) {
 function AppointmentsTab({ filter }: { filter: string }) {
   const rows = useQuery(api.forms.listAppointments, filter ? { status: filter } : {});
   const updateStatus = useMutation(api.forms.updateAppointmentStatus);
+  const deleteAppointment = useMutation(api.forms.deleteAppointment);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Id<"appointments"> | null>(null);
 
   if (rows === undefined)
     return <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-maroon-700" /></div>;
@@ -60,7 +63,7 @@ function AppointmentsTab({ filter }: { filter: string }) {
     return <p className="py-12 text-center text-sm text-gray-400">No appointments found.</p>;
 
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
@@ -82,19 +85,67 @@ function AppointmentsTab({ filter }: { filter: string }) {
               <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-1">
-                  {r.status === "pending" && (
+                  {r.status === "pending" ? (
                     <>
-                      <button onClick={() => updateStatus({ id: r._id as Id<"appointments">, status: "confirmed" })} className="rounded p-1.5 text-green-600 hover:bg-green-50" title="Confirm"><Check className="h-4 w-4" /></button>
-                      <button onClick={() => updateStatus({ id: r._id as Id<"appointments">, status: "cancelled" })} className="rounded p-1.5 text-red-600 hover:bg-red-50" title="Cancel"><X className="h-4 w-4" /></button>
+                      <button
+                        onClick={() => updateStatus({ id: r._id as Id<"appointments">, status: "confirmed" })}
+                        className="rounded p-1.5 text-green-600 hover:bg-green-50"
+                        title="Confirm"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => updateStatus({ id: r._id as Id<"appointments">, status: "cancelled" })}
+                        className="rounded p-1.5 text-amber-600 hover:bg-amber-50"
+                        title="Cancel"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </>
+                  ) : (
+                    <span className="text-xs text-gray-400">—</span>
                   )}
-                  {r.status !== "pending" && <span className="text-xs text-gray-400">—</span>}
+                  <button
+                    onClick={() => setAppointmentToDelete(r._id as Id<"appointments">)}
+                    className="rounded p-1.5 text-red-600 hover:bg-red-50"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {appointmentToDelete && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <h3 className="mb-2 text-base font-semibold text-gray-900">Delete appointment?</h3>
+            <p className="text-sm text-gray-600">
+              This will permanently remove the selected appointment submission. This action cannot be undone.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setAppointmentToDelete(null)}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteAppointment({ id: appointmentToDelete });
+                  setAppointmentToDelete(null);
+                }}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -104,6 +155,8 @@ function AppointmentsTab({ filter }: { filter: string }) {
 function RegistrationsTab({ filter }: { filter: string }) {
   const rows = useQuery(api.forms.listRegistrations, filter ? { status: filter } : {});
   const updateStatus = useMutation(api.forms.updateRegistrationStatus);
+  const deleteRegistration = useMutation(api.forms.deleteRegistration);
+  const [registrationToDelete, setRegistrationToDelete] = useState<Id<"registrations"> | null>(null);
 
   if (rows === undefined)
     return <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-maroon-700" /></div>;
@@ -111,7 +164,7 @@ function RegistrationsTab({ filter }: { filter: string }) {
     return <p className="py-12 text-center text-sm text-gray-400">No registrations found.</p>;
 
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
@@ -133,19 +186,67 @@ function RegistrationsTab({ filter }: { filter: string }) {
               <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-1">
-                  {r.status === "pending" && (
+                  {r.status === "pending" ? (
                     <>
-                      <button onClick={() => updateStatus({ id: r._id as Id<"registrations">, status: "approved" })} className="rounded p-1.5 text-green-600 hover:bg-green-50" title="Approve"><Check className="h-4 w-4" /></button>
-                      <button onClick={() => updateStatus({ id: r._id as Id<"registrations">, status: "rejected" })} className="rounded p-1.5 text-red-600 hover:bg-red-50" title="Reject"><X className="h-4 w-4" /></button>
+                      <button
+                        onClick={() => updateStatus({ id: r._id as Id<"registrations">, status: "approved" })}
+                        className="rounded p-1.5 text-green-600 hover:bg-green-50"
+                        title="Approve"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => updateStatus({ id: r._id as Id<"registrations">, status: "rejected" })}
+                        className="rounded p-1.5 text-amber-600 hover:bg-amber-50"
+                        title="Reject"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </>
+                  ) : (
+                    <span className="text-xs text-gray-400">—</span>
                   )}
-                  {r.status !== "pending" && <span className="text-xs text-gray-400">—</span>}
+                  <button
+                    onClick={() => setRegistrationToDelete(r._id as Id<"registrations">)}
+                    className="rounded p-1.5 text-red-600 hover:bg-red-50"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {registrationToDelete && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <h3 className="mb-2 text-base font-semibold text-gray-900">Delete registration?</h3>
+            <p className="text-sm text-gray-600">
+              This will permanently remove the selected library registration. This action cannot be undone.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setRegistrationToDelete(null)}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteRegistration({ id: registrationToDelete });
+                  setRegistrationToDelete(null);
+                }}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -155,6 +256,8 @@ function RegistrationsTab({ filter }: { filter: string }) {
 function RenewalsTab({ filter }: { filter: string }) {
   const rows = useQuery(api.forms.listBookRenewals, filter ? { status: filter } : {});
   const updateStatus = useMutation(api.forms.updateRenewalStatus);
+  const deleteRenewal = useMutation(api.forms.deleteRenewal);
+  const [renewalToDelete, setRenewalToDelete] = useState<Id<"bookRenewals"> | null>(null);
 
   if (rows === undefined)
     return <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-maroon-700" /></div>;
@@ -162,7 +265,7 @@ function RenewalsTab({ filter }: { filter: string }) {
     return <p className="py-12 text-center text-sm text-gray-400">No renewal requests found.</p>;
 
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
@@ -184,19 +287,67 @@ function RenewalsTab({ filter }: { filter: string }) {
               <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-1">
-                  {r.status === "pending" && (
+                  {r.status === "pending" ? (
                     <>
-                      <button onClick={() => updateStatus({ id: r._id as Id<"bookRenewals">, status: "approved" })} className="rounded p-1.5 text-green-600 hover:bg-green-50" title="Approve"><Check className="h-4 w-4" /></button>
-                      <button onClick={() => updateStatus({ id: r._id as Id<"bookRenewals">, status: "rejected" })} className="rounded p-1.5 text-red-600 hover:bg-red-50" title="Reject"><X className="h-4 w-4" /></button>
+                      <button
+                        onClick={() => updateStatus({ id: r._id as Id<"bookRenewals">, status: "approved" })}
+                        className="rounded p-1.5 text-green-600 hover:bg-green-50"
+                        title="Approve"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => updateStatus({ id: r._id as Id<"bookRenewals">, status: "rejected" })}
+                        className="rounded p-1.5 text-amber-600 hover:bg-amber-50"
+                        title="Reject"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </>
+                  ) : (
+                    <span className="text-xs text-gray-400">—</span>
                   )}
-                  {r.status !== "pending" && <span className="text-xs text-gray-400">—</span>}
+                  <button
+                    onClick={() => setRenewalToDelete(r._id as Id<"bookRenewals">)}
+                    className="rounded p-1.5 text-red-600 hover:bg-red-50"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {renewalToDelete && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <h3 className="mb-2 text-base font-semibold text-gray-900">Delete book renewal?</h3>
+            <p className="text-sm text-gray-600">
+              This will permanently remove the selected book renewal request. This action cannot be undone.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setRenewalToDelete(null)}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteRenewal({ id: renewalToDelete });
+                  setRenewalToDelete(null);
+                }}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -205,6 +356,8 @@ function RenewalsTab({ filter }: { filter: string }) {
 
 function SurveysTab() {
   const rows = useQuery(api.forms.listSurveys, {});
+  const deleteSurvey = useMutation(api.forms.deleteSurvey);
+  const [surveyToDelete, setSurveyToDelete] = useState<Id<"surveys"> | null>(null);
 
   if (rows === undefined)
     return <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-maroon-700" /></div>;
@@ -212,12 +365,12 @@ function SurveysTab() {
     return <p className="py-12 text-center text-sm text-gray-400">No surveys submitted yet.</p>;
 
   return (
-    <div className="divide-y divide-gray-100">
+    <div className="relative divide-y divide-gray-100">
       {rows.map((r) => {
         const avg = r.ratings.length > 0 ? r.ratings.reduce((s, x) => s + x.rating, 0) / r.ratings.length : 0;
         return (
           <div key={r._id} className="px-4 py-4 hover:bg-gray-50">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <div className="flex">
                   {[1, 2, 3, 4, 5].map((n) => (
@@ -226,7 +379,16 @@ function SurveysTab() {
                 </div>
                 <span className="text-sm font-medium text-gray-700">{avg.toFixed(1)}</span>
               </div>
-              <span className="text-xs text-gray-400">{formatDate(r.createdAt)}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">{formatDate(r.createdAt)}</span>
+                <button
+                  onClick={() => setSurveyToDelete(r._id as Id<"surveys">)}
+                  className="rounded p-1.5 text-red-600 hover:bg-red-50"
+                  title="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             <div className="mt-2 grid gap-1 text-xs text-gray-500 sm:grid-cols-2 md:grid-cols-3">
               {r.ratings.map((x) => (
@@ -237,6 +399,34 @@ function SurveysTab() {
           </div>
         );
       })}
+
+      {surveyToDelete && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <h3 className="mb-2 text-base font-semibold text-gray-900">Delete survey response?</h3>
+            <p className="text-sm text-gray-600">
+              This will permanently remove the selected survey response. This action cannot be undone.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setSurveyToDelete(null)}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteSurvey({ id: surveyToDelete });
+                  setSurveyToDelete(null);
+                }}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
