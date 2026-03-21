@@ -253,3 +253,56 @@ export const bulkImport = mutation({
     return `Imported ${count} books`;
   },
 });
+
+export const syncNewPdfs = mutation({
+  args: {
+    pdfs: v.array(
+      v.object({
+        driveFileId: v.string(),
+        driveFileName: v.string(),
+        title: v.string(),
+        authors: v.array(v.string()),
+        subject: v.optional(v.array(v.string())),
+        keywords: v.optional(v.array(v.string())),
+        publisher: v.optional(v.string()),
+        publicationYear: v.optional(v.number()),
+        format: v.string(),
+        availability: v.string(),
+        pdfViewLink: v.string(),
+        pdfDownloadLink: v.optional(v.string()),
+        pdfThumbnail: v.optional(v.string()),
+        fileSize: v.number(),
+        digitalAccessLink: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    let newCount = 0;
+    let skippedCount = 0;
+
+    for (const pdf of args.pdfs) {
+      const existing = await ctx.db
+        .query("books")
+        .withIndex("by_driveFileId", (q) => 
+          q.eq("driveFileId", pdf.driveFileId)
+        )
+        .first();
+
+      if (!existing) {
+        await ctx.db.insert("books", {
+          ...pdf,
+          totalCopies: 1,
+          availableCopies: 1,
+          lastUpdated: now,
+          createdAt: now,
+        });
+        newCount++;
+      } else {
+        skippedCount++;
+      }
+    }
+
+    return { newCount, skippedCount, total: args.pdfs.length };
+  },
+});

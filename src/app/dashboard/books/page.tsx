@@ -13,10 +13,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Link,
+  RefreshCw,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
+import Toast from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -67,6 +70,8 @@ export default function BooksPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { showSuccess, showError, successToast, errorToast } = useToast();
 
   const activeBooks = books ?? [];
 
@@ -193,6 +198,28 @@ export default function BooksPage() {
     }
   };
 
+  const handleSyncDrive = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch("/api/sync-drive-pdfs", {
+        method: "POST",
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        showSuccess(
+          `Sync complete! Added ${data.newCount} new PDFs, skipped ${data.skippedCount} existing.`
+        );
+      } else {
+        showError(data.error || "Failed to sync PDFs");
+      }
+    } catch (error: any) {
+      showError(error.message || "Failed to sync PDFs");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -206,10 +233,35 @@ export default function BooksPage() {
               : `${filtered.length} of ${activeBooks.length} books shown`}
           </p>
         </div>
-        <Button onClick={openAddModal} className="gap-2">
-          <Plus className="h-4 w-4" /> Add Book
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSyncDrive}
+            disabled={isSyncing}
+            variant="secondary"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+            {isSyncing ? "Syncing..." : "Sync Google Drive"}
+          </Button>
+          <Button onClick={openAddModal} className="gap-2">
+            <Plus className="h-4 w-4" /> Add Book
+          </Button>
+        </div>
       </div>
+
+      {/* Toast Notifications */}
+      <Toast
+        mounted={successToast.mounted}
+        visible={successToast.visible}
+        message={successToast.message}
+        type="success"
+      />
+      <Toast
+        mounted={errorToast.mounted}
+        visible={errorToast.visible}
+        message={errorToast.message}
+        type="error"
+      />
 
       {/* Search & Filter */}
       <div className="flex flex-wrap gap-3">

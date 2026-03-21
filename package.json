@@ -10,7 +10,8 @@
     "convex:dev": "npx convex dev",
     "convex:deploy": "npx convex deploy",
     "sync:pdfs": "tsx scripts/syncDrivePdfsToBooks.ts",
-    "cleanup:pdfs": "tsx scripts/cleanupDuplicatePdfs.ts"
+    "cleanup:pdfs": "tsx scripts/cleanupDuplicatePdfs.ts",
+    "check:duplicates": "tsx scripts/checkDuplicates.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -104,7 +104,7 @@ export default function TutorialsPage() {
                   {/* Email Tutorial */}
                   <div>
                     <h3 className="mb-4 text-lg font-semibold text-gray-900 flex items-center">Email Tutorial</h3>
-                    <div className="aspect-[4/3] w-full max-w-3xl overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 shadow-sm">
+                    <div className="aspect-4/3 w-full max-w-3xl overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 shadow-sm">
                       <iframe src="https://www.slideshare.net/slideshow/embed_code/16301132" className="h-full w-full border-none" frameBorder="0" marginWidth={0} marginHeight={0} scrolling="no" allowFullScreen></iframe>
                     </div>
                   </div>
@@ -121,13 +121,13 @@ export default function TutorialsPage() {
                   <div className="grid gap-8 md:grid-cols-2">
                     <div>
                       <h3 className="mb-4 text-lg font-semibold text-gray-900 flex items-center">Britannica Academic</h3>
-                      <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 shadow-sm">
+                      <div className="aspect-4/3 w-full overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 shadow-sm">
                         <iframe src="https://www.slideshare.net/slideshow/embed_code/16301292" className="h-full w-full border-none" frameBorder="0" marginWidth={0} marginHeight={0} scrolling="no" allowFullScreen></iframe>
                       </div>
                     </div>
                     <div>
                       <h3 className="mb-4 text-lg font-semibold text-gray-900 flex items-center">Kids InfoBits</h3>
-                      <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 shadow-sm">
+                      <div className="aspect-4/3 w-full overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 shadow-sm">
                         <iframe src="https://www.slideshare.net/slideshow/embed_code/16301382" className="h-full w-full border-none" frameBorder="0" marginWidth={0} marginHeight={0} scrolling="no" allowFullScreen></iframe>
                       </div>
                     </div>
@@ -136,7 +136,7 @@ export default function TutorialsPage() {
                   {/* Digital Newspaper */}
                   <div>
                     <h3 className="mb-4 text-lg font-semibold text-gray-900 flex items-center">Digital Newspaper</h3>
-                    <div className="aspect-[4/3] w-full max-w-3xl overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 shadow-sm">
+                    <div className="aspect-4/3 w-full max-w-3xl overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 shadow-sm">
                       <iframe src="https://www.slideshare.net/slideshow/embed_code/16301381" className="h-full w-full border-none" frameBorder="0" marginWidth={0} marginHeight={0} scrolling="no" allowFullScreen></iframe>
                     </div>
                   </div>
