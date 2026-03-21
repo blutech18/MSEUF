@@ -27,6 +27,18 @@ export const getById = query({
   },
 });
 
+export const getByDriveFileId = query({
+  args: { driveFileId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("books")
+      .withIndex("by_driveFileId", (q) => 
+        q.eq("driveFileId", args.driveFileId)
+      )
+      .first();
+  },
+});
+
 export const search = query({
   args: {
     query: v.string(),
@@ -113,11 +125,23 @@ export const create = mutation({
     digitalAccessLink: v.optional(v.string()),
     coverImageUrl: v.optional(v.string()),
     availability: v.string(),
+    totalCopies: v.optional(v.number()),
+    availableCopies: v.optional(v.number()),
+    driveFileId: v.optional(v.string()),
+    driveFileName: v.optional(v.string()),
+    pdfViewLink: v.optional(v.string()),
+    pdfDownloadLink: v.optional(v.string()),
+    pdfThumbnail: v.optional(v.string()),
+    fileSize: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const totalCopies = args.totalCopies ?? 1;
+    const availableCopies = args.availableCopies ?? totalCopies;
     return await ctx.db.insert("books", {
       ...args,
+      totalCopies,
+      availableCopies,
       lastUpdated: now,
       createdAt: now,
     });
@@ -143,6 +167,14 @@ export const update = mutation({
     digitalAccessLink: v.optional(v.string()),
     coverImageUrl: v.optional(v.string()),
     availability: v.optional(v.string()),
+    totalCopies: v.optional(v.number()),
+    availableCopies: v.optional(v.number()),
+    driveFileId: v.optional(v.string()),
+    driveFileName: v.optional(v.string()),
+    pdfViewLink: v.optional(v.string()),
+    pdfDownloadLink: v.optional(v.string()),
+    pdfThumbnail: v.optional(v.string()),
+    fileSize: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;

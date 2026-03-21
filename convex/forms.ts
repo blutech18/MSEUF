@@ -183,6 +183,36 @@ export const updateRegistrationStatus = mutation({
   args: { id: v.id("registrations"), status: v.string() },
   handler: async (ctx, { id, status }) => {
     await ctx.db.patch(id, { status });
+
+    // When a registration is approved, automatically create a student record
+    if (status === "approved") {
+      const registration = await ctx.db.get(id);
+      if (registration) {
+        // Check if student already exists
+        const existing = await ctx.db
+          .query("students")
+          .withIndex("by_studentNumber", (q) =>
+            q.eq("studentNumber", registration.studentId)
+          )
+          .first();
+
+        if (!existing) {
+          // Parse year level string to number (e.g. "1st Year" -> 1, "2nd Year" -> 2)
+          const yearMatch = registration.yearLevel.match(/\d+/);
+          const year = yearMatch ? parseInt(yearMatch[0], 10) : 1;
+
+          await ctx.db.insert("students", {
+            studentNumber: registration.studentId,
+            name: registration.name,
+            program: registration.program ?? "",
+            department: registration.department,
+            year,
+            isActive: true,
+            createdAt: Date.now(),
+          });
+        }
+      }
+    }
   },
 });
 

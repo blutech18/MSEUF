@@ -38,6 +38,8 @@ const EMPTY_FORM = {
   format: "Hardcover",
   digitalAccessLink: "",
   availability: "available" as BookAvailabilityStatus,
+  totalCopies: "1",
+  availableCopies: "1",
 };
 
 const availabilityBadge = (status: string) => {
@@ -115,6 +117,8 @@ export default function BooksPage() {
       format: book.format ?? "Hardcover",
       digitalAccessLink: book.digitalAccessLink ?? "",
       availability: book.availability as BookAvailabilityStatus,
+      totalCopies: (book.totalCopies ?? 1).toString(),
+      availableCopies: (book.availableCopies ?? 1).toString(),
     });
     setFormError("");
     setShowModal(true);
@@ -129,6 +133,9 @@ export default function BooksPage() {
       const subject = form.subject ? form.subject.split(",").map((s) => s.trim()).filter(Boolean) : undefined;
       const keywords = form.keywords ? form.keywords.split(",").map((k) => k.trim()).filter(Boolean) : undefined;
       const publicationYear = form.publicationYear ? parseInt(form.publicationYear) : undefined;
+
+      const totalCopies = form.totalCopies ? parseInt(form.totalCopies) : 1;
+      const availableCopies = form.availableCopies ? parseInt(form.availableCopies) : totalCopies;
 
       if (editingId) {
         await updateBook({
@@ -148,6 +155,8 @@ export default function BooksPage() {
           format: form.format || undefined,
           digitalAccessLink: form.digitalAccessLink || undefined,
           availability: form.availability,
+          totalCopies,
+          availableCopies,
         });
       } else {
         await createBook({
@@ -166,6 +175,8 @@ export default function BooksPage() {
           format: form.format || undefined,
           digitalAccessLink: form.digitalAccessLink || undefined,
           availability: form.availability,
+          totalCopies,
+          availableCopies,
         });
       }
       setShowModal(false);
@@ -553,6 +564,27 @@ export default function BooksPage() {
                     <option value="maintenance">Under Maintenance</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Total Copies"
+                  type="number"
+                  value={form.totalCopies}
+                  onChange={(e) =>
+                    setForm({ ...form, totalCopies: e.target.value })
+                  }
+                  placeholder="1"
+                />
+                <Input
+                  label="Available Copies"
+                  type="number"
+                  value={form.availableCopies}
+                  onChange={(e) =>
+                    setForm({ ...form, availableCopies: e.target.value })
+                  }
+                  placeholder="1"
+                />
               </div>
 
               <div className="flex gap-3 pt-4">

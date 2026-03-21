@@ -195,6 +195,7 @@ export default function ChatWidget() {
   const [errToastMsg, setErrToastMsg] = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [hasLibraryAccount, setHasLibraryAccount] = useState<boolean | null>(null);
+  const [reservingBookId, setReservingBookId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -408,28 +409,98 @@ export default function ChatWidget() {
     doLogout();
   };
 
-  if (!isOpen) {
-    return (
-      <button
-        onClick={toggleChat}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-maroon-800 text-white shadow-lg transition-all duration-300 hover:bg-maroon-900 hover:shadow-xl hover:scale-105"
-        aria-label="Open AI Chat Assistant"
-      >
-        <MessageCircle className="h-6 w-6" />
-      </button>
-    );
-  }
+  const handleReserveBook = async (bookId: string, bookTitle: string) => {
+    if (!verifiedStudent || reservingBookId) return;
+    setReservingBookId(bookId);
+    try {
+      await convexHttp.mutation(api.reservations.create, {
+        bookId: bookId as never,
+        studentNumber: verifiedStudent.studentNumber,
+        studentName: verifiedStudent.name,
+        department: verifiedStudent.department,
+        program: verifiedStudent.program,
+      });
+      addMessage({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: `Your reservation for **${bookTitle}** has been placed successfully! Please claim it at the Circulation and Reserve Section within 24 hours, or it will be automatically cancelled.`,
+        timestamp: Date.now(),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to reserve book.";
+      showErrorToast(msg);
+    } finally {
+      setReservingBookId(null);
+    }
+  };
+
+  const [showWelcomeBubble, setShowWelcomeBubble] = useState(true);
 
   return (
-    <div
-      className={cn(
-        "fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl transition-all duration-300",
-        isExpanded
-          ? "bottom-0 right-0 h-full w-full sm:bottom-4 sm:right-4 sm:h-[90vh] sm:w-150 sm:rounded-2xl"
-          : "bottom-4 right-4 h-150 w-100 max-sm:bottom-0 max-sm:right-0 max-sm:h-full max-sm:w-full max-sm:rounded-none",
-      )}
-    >
-      {/* Chat Header */}
+    <>
+      {/* Closed State (Bubble & Icon) */}
+      <div
+        className={cn(
+          "fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 transition-all duration-500",
+          isOpen ? "opacity-0 pointer-events-none translate-y-8 scale-95" : "opacity-100 translate-y-0 scale-100"
+        )}
+      >
+        <div className="relative flex items-center justify-end">
+          {/* Welcome bubble */}
+          {showWelcomeBubble && (
+            <div className="absolute right-[calc(100%+14px)] sm:right-[calc(100%+16px)] top-1/2 -translate-y-1/2 animate-fade-in-up w-[280px] sm:w-[340px] max-w-[calc(100vw-110px)] sm:max-w-[calc(100vw-140px)] origin-right">
+              <div className="relative rounded-[20px] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100">
+                {/* Speech bubble arrow (pointing right towards avatar) */}
+                <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-4 h-4 bg-white border-t border-r border-gray-100 rotate-45 rounded-sm" />
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowWelcomeBubble(false);
+                  }}
+                  className="absolute -top-3 -right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-[#e8eaed] text-[#5f6368] hover:bg-[#dadce0] transition-colors shadow-sm"
+                  aria-label="Dismiss"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                
+                <p className="relative z-10 text-[16px] text-[#3c4043] leading-[1.6]">
+                  Hi! I&apos;m <strong className="text-[#8b152b] font-bold">ROSe</strong>, your MSEUF University Libraries Assistant. How can I help you today?
+                </p>
+              </div>
+            </div>
+          )}
+          {/* ROSe icon button */}
+          <button
+            onClick={toggleChat}
+            className="relative flex h-[68px] w-[68px] sm:h-[76px] sm:w-[76px] shrink-0 items-center justify-center rounded-full shadow-[0_4px_20px_rgba(139,21,43,0.3)] transition-transform duration-300 hover:scale-105 overflow-hidden border-[3px] border-[#8b152b] bg-white"
+            aria-label="Open AI Chat Assistant"
+          >
+            <Image
+              src="/rose.png"
+              alt="ROSe"
+              width={84}
+              height={84}
+              className="h-full w-full object-cover object-center scale-[1.15]"
+              priority
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Opened State (Chat Window) */}
+      <div
+        className={cn(
+          "fixed z-50 flex flex-col overflow-hidden bg-white shadow-2xl transition-all duration-500 origin-bottom-right",
+          isOpen
+            ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+            : "opacity-0 translate-y-8 scale-95 pointer-events-none",
+          isExpanded
+            ? "bottom-0 right-0 h-full w-full sm:bottom-4 sm:right-4 sm:h-[90vh] sm:w-150 sm:rounded-2xl"
+            : "bottom-4 right-4 h-150 w-100 rounded-2xl max-sm:bottom-0 max-sm:right-0 max-sm:h-full max-sm:w-full max-sm:rounded-none border border-gray-200"
+        )}
+      >
+        {/* Chat Header */}
       <div className="flex items-center justify-between bg-linear-to-r from-maroon-800 to-maroon-900 px-4 py-3 text-white">
         <div className="flex items-center gap-3">
           <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-white/30">
@@ -750,7 +821,7 @@ export default function ChatWidget() {
                             >
                               <div className="flex items-start gap-2">
                                 <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-maroon-600" />
-                                <div>
+                                <div className="flex-1">
                                   <p className="font-medium text-gray-900">
                                     {book.title}
                                   </p>
@@ -762,21 +833,26 @@ export default function ChatWidget() {
                                       Call #: {book.callNumber}
                                     </p>
                                   )}
-                                  <span
-                                    className={cn(
-                                      "mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium",
-                                      book.availability === "available"
-                                        ? "bg-green-100 text-green-700"
-                                        : book.availability === "reserved"
-                                          ? "bg-yellow-100 text-yellow-700"
-                                          : "bg-red-100 text-red-700",
-                                    )}
-                                  >
-                                    {book.availability.charAt(0).toUpperCase() +
-                                      book.availability.slice(1)}
-                                  </span>
-                                  {book.digitalAccessLink && (
-                                    <div className="mt-1.5">
+                                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                    <span
+                                      className={cn(
+                                        "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+                                        book.availability === "available"
+                                          ? "bg-green-100 text-green-700"
+                                          : book.availability === "reserved"
+                                            ? "bg-yellow-100 text-yellow-700"
+                                            : "bg-red-100 text-red-700",
+                                      )}
+                                    >
+                                      {book.availability.charAt(0).toUpperCase() +
+                                        book.availability.slice(1)}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                      {book.availableCopies ?? 1}/{book.totalCopies ?? 1} copies available
+                                    </span>
+                                  </div>
+                                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                    {book.digitalAccessLink && (
                                       <a
                                         href={book.digitalAccessLink}
                                         target="_blank"
@@ -786,8 +862,22 @@ export default function ChatWidget() {
                                         <ExternalLink className="h-3 w-3" />
                                         Access E-Book
                                       </a>
-                                    </div>
-                                  )}
+                                    )}
+                                    {(book.availableCopies ?? 1) > 0 && verifiedStudent && (
+                                      <button
+                                        onClick={() => handleReserveBook(book._id, book.title)}
+                                        disabled={reservingBookId === book._id}
+                                        className="inline-flex items-center gap-1 rounded-full bg-maroon-800 px-2.5 py-0.5 text-xs font-medium text-white transition-colors hover:bg-maroon-900 disabled:opacity-50"
+                                      >
+                                        {reservingBookId === book._id ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                          <BookOpen className="h-3 w-3" />
+                                        )}
+                                        Reserve
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -1049,5 +1139,6 @@ export default function ChatWidget() {
         </div>
       )}
     </div>
+    </>
   );
 }

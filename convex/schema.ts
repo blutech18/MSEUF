@@ -33,6 +33,14 @@ export default defineSchema({
     digitalAccessLink: v.optional(v.string()),
     coverImageUrl: v.optional(v.string()),
     availability: v.string(),
+    totalCopies: v.optional(v.number()),
+    availableCopies: v.optional(v.number()),
+    driveFileId: v.optional(v.string()),
+    driveFileName: v.optional(v.string()),
+    pdfViewLink: v.optional(v.string()),
+    pdfDownloadLink: v.optional(v.string()),
+    pdfThumbnail: v.optional(v.string()),
+    fileSize: v.optional(v.number()),
     lastUpdated: v.number(),
     createdAt: v.number(),
   })
@@ -43,7 +51,26 @@ export default defineSchema({
     .searchIndex("search_abstract", { searchField: "abstract" })
     .index("by_availability", ["availability"])
     .index("by_callNumber", ["callNumber"])
-    .index("by_publicationYear", ["publicationYear"]),
+    .index("by_publicationYear", ["publicationYear"])
+    .index("by_driveFileId", ["driveFileId"]),
+
+  reservations: defineTable({
+    bookId: v.id("books"),
+    studentNumber: v.string(),
+    studentName: v.string(),
+    department: v.string(),
+    program: v.string(),
+    status: v.string(), // pending, confirmed, borrowed, returned, cancelled, expired
+    dateBorrowed: v.optional(v.string()),
+    returnDate: v.optional(v.string()),
+    cancelReason: v.optional(v.string()),
+    createdAt: v.number(),
+    expiresAt: v.number(), // auto-cancel after 24hrs if not claimed
+  })
+    .index("by_bookId", ["bookId"])
+    .index("by_studentNumber", ["studentNumber"])
+    .index("by_status", ["status"])
+    .index("by_expiresAt", ["expiresAt"]),
 
   staff: defineTable({
     email: v.string(),

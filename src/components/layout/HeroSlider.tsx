@@ -85,10 +85,10 @@ export default function HeroSlider() {
               assistance — all in one place.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link href="/follett-destiny" className="btn-gold gap-2">
+              <a href="https://envergalibrary.com/follett" target="_blank" rel="noopener noreferrer" className="btn-gold gap-2">
                 <BookOpen className="h-4 w-4" />
                 Browse OPAC Catalog
-              </Link>
+              </a>
               <Link
                 href="/tutorials"
                 className="btn-secondary border-white/30 text-white hover:bg-white/10 hover:text-white"

@@ -18,6 +18,8 @@ export interface Book {
   digitalAccessLink?: string;
   coverImageUrl?: string;
   availability: BookAvailabilityStatus;
+  totalCopies?: number;
+  availableCopies?: number;
   lastUpdated: number;
   createdAt: number;
 }

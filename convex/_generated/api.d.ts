@@ -13,6 +13,7 @@ import type * as faqs from "../faqs.js";
 import type * as forms from "../forms.js";
 import type * as programs from "../programs.js";
 import type * as queryLogs from "../queryLogs.js";
+import type * as reservations from "../reservations.js";
 import type * as seed from "../seed.js";
 import type * as staff from "../staff.js";
 import type * as students from "../students.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   forms: typeof forms;
   programs: typeof programs;
   queryLogs: typeof queryLogs;
+  reservations: typeof reservations;
   seed: typeof seed;
   staff: typeof staff;
   students: typeof students;

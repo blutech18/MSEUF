@@ -5,9 +5,9 @@ import { BookOpen, ExternalLink, Laptop, Globe } from "lucide-react";
 export const metadata: Metadata = { title: "E-Books" };
 
 const PREMIUM_PLATFORMS = [
-  { name: "IG Library", url: "https://portal.igpublish.com", desc: "Access thousands of e-books across multiple disciplines from international publishers." },
-  { name: "ProQuest Ebook Central", url: "https://www.proquest.com", desc: "Digital textbooks and scholarly works available for online reading." },
-  { name: "EBSCO eBooks", url: "https://search.ebscohost.com", desc: "Collection of academic e-books with offline reading capabilities." },
+  { name: "ProQuest", url: "https://www.proquest.com", desc: "Academic journals, dissertations, and scholarly publications." },
+  { name: "ProQuest eBook Central", url: "https://ebookcentral.proquest.com/auth/lib/mseu-ebooks/login.action?returnURL=https%3A%2F%2Febookcentral.proquest.com%2Flib%2Fmseu-ebooks%2Fhome.action", desc: "Digital textbooks and scholarly e-books available for online reading." },
+  { name: "Philippine E-Journal", url: "https://ejournals.ph", desc: "Local research publications and academic journals from the Philippines." },
 ];
 
 const OPEN_ACCESS_CATEGORIES = [
@@ -99,7 +99,7 @@ export default function EBooksPage() {
               <span className="shrink-0 w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center text-xs font-bold">i</span>
               <span>
                 <strong>Access Note:</strong> Premium e-books are available on campus through the library network. 
-                For off-campus access to IG Library, ProQuest, or EBSCO, please contact the library for login credentials.
+                For off-campus access to ProQuest or ProQuest eBook Central, please contact the library for login credentials.
               </span>
             </p>
           </div>

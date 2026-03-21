@@ -60,9 +60,6 @@ export default function Header() {
                 <p className="font-heading text-base font-bold leading-snug text-white sm:text-lg">
                   MSEUF University Libraries
                 </p>
-                <p className="text-xs text-maroon-300">
-                  Manuel S. Enverga University Foundation
-                </p>
               </div>
             </Link>
 

@@ -11,7 +11,6 @@ export const SITE_CONFIG = {
 
 export const NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "Follett Destiny", href: "/follett-destiny" },
   { label: "Tutorials", href: "/tutorials" },
   { label: "LIB.COM", href: "/libcom" },
   { label: "Newsletter", href: "/newsletter" },
@@ -56,8 +55,7 @@ export const COLLECTION_ITEMS = [
   { label: "E-Books", href: "/collections/e-books" },
   { label: "Fiction Reviews", href: "/collections/fiction-reviews" },
   { label: "ProQuest", href: "/collections/proquest", external: true },
-  { label: "EBSCO", href: "/collections/ebsco", external: true },
-  { label: "IG Library", href: "/collections/ig-library", external: true },
+  { label: "ProQuest eBook Central", href: "https://ebookcentral.proquest.com/auth/lib/mseu-ebooks/login.action?returnURL=https%3A%2F%2Febookcentral.proquest.com%2Flib%2Fmseu-ebooks%2Fhome.action", external: true },
   {
     label: "Philippine E-Journal",
     href: "/collections/philippine-ejournal",

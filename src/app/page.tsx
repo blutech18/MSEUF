@@ -27,7 +27,7 @@ const FEATURES = [
     icon: Database,
     title: "Digital Resources",
     description:
-      "Access ProQuest, EBSCO, IG Library, and Philippine E-Journal databases.",
+      "Access ProQuest, ProQuest eBook Central, and Philippine E-Journal databases.",
   },
   {
     icon: BookOpen,
@@ -50,14 +50,9 @@ const PARTNERSHIPS = [
     description: "Academic journals & dissertations",
   },
   {
-    name: "EBSCO",
-    url: "https://search.ebscohost.com",
-    description: "Multidisciplinary research",
-  },
-  {
-    name: "IG Library",
-    url: "https://portal.igpublish.com",
-    description: "E-books collection",
+    name: "ProQuest eBook Central",
+    url: "https://ebookcentral.proquest.com/auth/lib/mseu-ebooks/login.action?returnURL=https%3A%2F%2Febookcentral.proquest.com%2Flib%2Fmseu-ebooks%2Fhome.action",
+    description: "Digital textbooks & scholarly e-books",
   },
   {
     name: "Philippine E-Journal",
@@ -263,7 +258,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {PARTNERSHIPS.map((partner) => (
               <a
                 key={partner.name}

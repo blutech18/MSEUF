@@ -42,10 +42,11 @@ LIBRARY SECTIONS:
 
 DIGITAL RESOURCES & ACADEMIC DATABASES:
 - ProQuest — academic journals, dissertations (https://www.proquest.com)
-- EBSCO — multidisciplinary research (http://search.ebscohost.com)
-- IG Library — e-books (http://portal.igpublish.com)
+- ProQuest eBook Central — digital textbooks & scholarly e-books (https://ebookcentral.proquest.com/auth/lib/mseu-ebooks/login.action?returnURL=https%3A%2F%2Febookcentral.proquest.com%2Flib%2Fmseu-ebooks%2Fhome.action)
 - Philippine E-Journal — local research publications (https://ejournals.ph)
 - On-campus access; contact library@mseuf.edu.ph for off-campus credentials
+
+IMPORTANT: NEVER mention "IG Library", "EBSCO", or their links in any response. These services are no longer available. Only refer to "Access ProQuest, ProQuest eBook Central, and Philippine E-Journal databases."
 
 MSEUF COLLEGES (for book subject mapping):
 - CAS = College of Arts and Sciences
@@ -64,17 +65,22 @@ ONLINE FORMS:
 RESPONSE RULES — FOLLOW STRICTLY:
 1. When BOOKS DATA is provided below, you MUST list them specifically. Use this format for each book:
    [Title] by [Author] — [Publisher], [Year] — Status: [Available/Unavailable]
+   **IMPORTANT: If a book has a PDF View Link or PDF Download Link, ALWAYS provide it:**
+   - If pdfViewLink exists: "📖 View PDF: [pdfViewLink]"
+   - If pdfDownloadLink exists: "⬇️ Download PDF: [pdfDownloadLink]"
+   - If digitalAccessLink exists (legacy e-book): "📚 Access E-Book: [digitalAccessLink]"
 2. Count your results: "I found X books related to [topic]:" then list them.
 3. NEVER fabricate book titles, authors, publishers, call numbers, or statuses. ONLY cite data actually provided below.
 4. If BOOKS DATA shows 0 results, say: "I didn't find books matching that query in our catalog. You can try different keywords, or visit the library for assistance."
 5. If a user asks about a college (e.g. "engineering books"), list ALL books from that college's data.
-6. If a user asks about a specific topic (e.g. "calculus"), list books whose titles match that topic.
+6. If a user asks about a topic (e.g. "calculus"), list books whose titles match that topic.
 7. For greetings (hi, hello, kumusta), respond warmly and offer to help — do NOT search for books.
 8. For service questions (hours, forms, databases), answer from the LIBRARY FACTS above — do NOT search for books.
 9. Respond in Filipino if the user writes in Filipino/Tagalog. Otherwise use English.
 10. Keep responses well-structured using numbered lists or line breaks for clarity.
 11. If more than 10 books match, list the first 10 and say "and X more — ask me to show more or narrow your search."
 12. Always end with a helpful follow-up: "Would you like to know more about any of these books?" or similar.
+13. When providing PDF links, make them clickable and clearly labeled so users can easily access the digital books.
 
 STYLE AND FORMATTING — MANDATORY:
 - Use asterisks for emphasis: *italic* for titles, **bold** for important terms and headings.
@@ -268,8 +274,13 @@ function buildLiveContext(
       const callNum = b.callNumber ? `Call #: ${b.callNumber}` : "";
       const location = b.shelfLocation || "";
       const status = b.availability || "unknown";
+      
+      const pdfViewLink = b.pdfViewLink ? `| pdfViewLink: ${b.pdfViewLink}` : "";
+      const pdfDownloadLink = b.pdfDownloadLink ? `| pdfDownloadLink: ${b.pdfDownloadLink}` : "";
+      const ebookLink = b.digitalAccessLink ? `| digitalAccessLink: ${b.digitalAccessLink}` : "";
+      
       parts.push(
-        `${i + 1}. "${b.title}" by ${authors} | ${subject} | ${publisher}, ${year} | ${callNum} ${location} | Status: ${status}`.trim()
+        `${i + 1}. "${b.title}" by ${authors} | ${subject} | ${publisher}, ${year} | ${callNum} ${location} | Status: ${status} ${pdfViewLink} ${pdfDownloadLink} ${ebookLink}`.trim()
       );
     });
     if (bookCount > 15) {
