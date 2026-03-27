@@ -70,11 +70,26 @@ ONLINE FORMS:
 
 RESPONSE RULES — FOLLOW STRICTLY:
 1. When BOOKS DATA is provided below, you MUST list them specifically. Use this format for each book:
-   [Title] by [Author] — [Publisher], [Year] — Status: [Available/Unavailable]
-   **IMPORTANT: If a book has a PDF View Link or PDF Download Link, ALWAYS provide it:**
+   
+   **FORMAT IDENTIFICATION (MANDATORY):**
+   - If a book has pdfViewLink, pdfDownloadLink, or digitalAccessLink → Label it as: � **E-Book**
+   - If a book has NO digital links → Label it as: 📚 **Physical**
+   
+   **BOOK LISTING FORMAT:**
+   [Format Badge] **[Title]** by *[Author]* — [Publisher], [Year] — Status: [Available/Unavailable]
+   
+   **DIGITAL ACCESS LINKS (if available):**
    - If pdfViewLink exists: "📖 View PDF: [pdfViewLink]"
    - If pdfDownloadLink exists: "⬇️ Download PDF: [pdfDownloadLink]"
-   - If digitalAccessLink exists (legacy e-book): "📚 Access E-Book: [digitalAccessLink]"
+   - If digitalAccessLink exists (legacy e-book): "🔗 Access E-Book: [digitalAccessLink]"
+   
+   **Example:**
+   📱 **E-Book** — **Calculus: Early Transcendentals** by *James Stewart* — Cengage, 2020 — Status: Available
+   📖 View PDF: [link]
+   
+   📚 **Physical** — **Introduction to Algorithms** by *Thomas Cormen* — MIT Press, 2009 — Status: Available
+   Call Number: QA76.6 .C662 2009 | Location: Circulation Section
+
 2. Count your results: "I found X books related to [topic]:" then list them.
 3. NEVER fabricate book titles, authors, publishers, call numbers, or statuses. ONLY cite data actually provided below.
 4. If BOOKS DATA shows 0 results, say: "I didn't find books matching that query in our catalog. You can try different keywords, or visit the library for assistance."
@@ -87,6 +102,7 @@ RESPONSE RULES — FOLLOW STRICTLY:
 11. If more than 10 books match, list the first 10 and say "and X more — ask me to show more or narrow your search."
 12. Always end with a helpful follow-up: "Would you like to know more about any of these books?" or similar.
 13. When providing PDF links, make them clickable and clearly labeled so users can easily access the digital books.
+14. ALWAYS include the format badge (📱 E-Book or 📚 Physical) at the start of each book listing to help users quickly identify the format.
 
 STYLE AND FORMATTING — MANDATORY:
 - Use asterisks for emphasis: *italic* for titles, **bold** for important terms and headings.
@@ -281,12 +297,16 @@ function buildLiveContext(
       const location = b.shelfLocation || "";
       const status = b.availability || "unknown";
       
+      // Determine format type
+      const hasDigitalAccess = b.pdfViewLink || b.pdfDownloadLink || b.digitalAccessLink;
+      const formatType = hasDigitalAccess ? "E-Book" : "Physical";
+      
       const pdfViewLink = b.pdfViewLink ? `| pdfViewLink: ${b.pdfViewLink}` : "";
       const pdfDownloadLink = b.pdfDownloadLink ? `| pdfDownloadLink: ${b.pdfDownloadLink}` : "";
       const ebookLink = b.digitalAccessLink ? `| digitalAccessLink: ${b.digitalAccessLink}` : "";
       
       parts.push(
-        `${i + 1}. "${b.title}" by ${authors} | ${subject} | ${publisher}, ${year} | ${callNum} ${location} | Status: ${status} ${pdfViewLink} ${pdfDownloadLink} ${ebookLink}`.trim()
+        `${i + 1}. [FORMAT: ${formatType}] "${b.title}" by ${authors} | ${subject} | ${publisher}, ${year} | ${callNum} ${location} | Status: ${status} ${pdfViewLink} ${pdfDownloadLink} ${ebookLink}`.trim()
       );
     });
     if (bookCount > 15) {
