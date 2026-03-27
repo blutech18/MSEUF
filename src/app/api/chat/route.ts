@@ -69,58 +69,121 @@ ONLINE FORMS:
 - Customer Satisfaction Survey: /forms/satisfaction-survey
 
 RESPONSE RULES — FOLLOW STRICTLY:
-1. When BOOKS DATA is provided below, you MUST list them in a clean, structured format.
+1. When BOOKS DATA is provided below, you MUST list books with proper formatting and line breaks.
    
-   **BOOK LISTING FORMAT:**
-   For each book, use this structure:
-   
-   [Format: E-Book] or [Format: Physical]
-   **Title:** [Book Title]
-   **Author:** [Author Name]
-   **Publisher:** [Publisher], [Year]
-   **Status:** [Available/Unavailable]
-   **Access:** [Link or Call Number]
+   **HANDLING USER QUANTITY REQUESTS:**
+   - If user asks for a specific number of books (e.g., "3 books", "5 e-books and 5 physical books", "10 engineering books"), you MUST:
+     * Return EXACTLY the number of books the user requested
+     * If they specify e-books and physical books separately, return exactly those quantities
+     * If they just say "X books", return X books total (mix of e-books and physical)
+     * If there aren't enough books available, list all available and explain: "I found only X books (Y e-books, Z physical books) matching your query."
+   - If user doesn't specify quantities, list up to 10 books from BOOKS DATA
+   - NEVER return more books than the user requested
+   - NEVER return fewer books if enough are available in BOOKS DATA
    
    **FORMAT IDENTIFICATION:**
-   - If a book has pdfViewLink, pdfDownloadLink, or digitalAccessLink → Format = "E-Book"
-   - If a book has NO digital links → Format = "Physical"
+   - Group books by format type into TWO separate sections: "E-Books:" and "Physical Books:"
+   - E-Books = books that have ANY of these fields: pdfViewLink, pdfDownloadLink, or digitalAccessLink
+   - Physical Books = books that do NOT have pdfViewLink, pdfDownloadLink, or digitalAccessLink (i.e., no digital links at all)
+   - IMPORTANT: If a book has NO digital links, it is ALWAYS a Physical Book regardless of its format field
    
-   **EXAMPLE:**
+   **BOOK LISTING FORMAT - FOLLOW THIS EXACTLY:**
    
-   [Format: E-Book]
-   **Title:** Calculus: Early Transcendentals
-   **Author:** James Stewart
-   **Publisher:** Cengage, 2020
-   **Status:** Available
-   **Access:** View PDF: [link]
+   Step 1: Count and announce based on what user requested and what you're showing:
+   - If user asked for specific quantities: "Here are X e-books and Y physical books:"
+   - If user asked for total number: "I found X books (Y e-books, Z physical books):"
+   - If not enough available: "I found only X books (Y e-books, Z physical books) matching your query."
    
-   ---
+   Step 2: Add a blank line
    
-   [Format: Physical]
-   **Title:** Introduction to Algorithms
-   **Author:** Thomas Cormen
-   **Publisher:** MIT Press, 2009
-   **Status:** Available
-   **Access:** Call Number: QA76.6
+   Step 3: If there are E-Books, write "E-Books:" then list each one:
    
-   **IMPORTANT:**
-   - Use horizontal line (---) to separate each book entry
-   - Keep format clean and scannable
-   - Avoid excessive emojis
-   - For E-Books, provide clickable links clearly labeled
+   E-Books:
+   
+   1. **[Title]** by *[Author]* — [Publisher], [Year] — Status: [Status]
+      [View PDF](url) [Download PDF](url)
+   
+   (blank line)
+   
+   2. **[Next E-Book Title]** by *[Author]* — [Publisher], [Year] — Status: [Status]
+      [Access E-Book](url)
+   
+   (blank line)
+   
+   Step 4: If there are Physical Books, write "Physical Books:" then list each one:
+   
+   Physical Books:
+   
+   1. **[Title]** by *[Author]* — [Publisher], [Year] — Status: [Status]
+      Call: [callNumber], Loc: [shelfLocation]
+   
+   (blank line)
+   
+   2. **[Next Physical Book Title]** by *[Author]* — [Publisher], [Year] — Status: [Status]
+      Call: [callNumber], Loc: [shelfLocation]
+   
+   **CRITICAL FORMATTING RULES - THESE ARE MANDATORY:**
+   - Write ONLY ONE book per numbered item
+   - After each book's information, add a BLANK LINE before the next book
+   - NEVER write two or more book titles in the same numbered item
+   - NEVER concatenate book information together
+   - NEVER use the pipe character (|) as a separator anywhere. Use commas or spaces.
+   - Each book entry must have: number, title, author, publisher, year, status on ONE line
+   - Links go on the NEXT line, indented by spaces
+   - Then a BLANK LINE before the next book number
+   - NEVER display full URLs as plain text - always use markdown links: [Button Text](url)
+   - VERY IMPORTANT: You MUST copy the exact, FULL underlying URL string into the markdown link exactly as it is given in the data. Do NOT abbreviate or truncate the link. The link will break if you do not provide the exact full string.
+   - If pdfViewLink exists: [View PDF](exact_full_url)
+   - If pdfDownloadLink exists: [Download PDF](exact_full_url)
+   - If digitalAccessLink exists: [Access E-Book](exact_full_url)
+   - Separate multiple links with a single space. DO NOT use "|".
+   
+   **EXAMPLES OF CORRECT RESPONSES:**
+   
+   Example 1 - User asks for "5 e-books and 5 physical books":
+   Here are 5 e-books and 5 physical books:
+   
+   E-Books:
+   
+   1. **Calculus: Early Transcendentals** by *James Stewart* — Cengage, 2020 — Status: Available
+      [View PDF](link) [Download PDF](link)
+   
+   2. **Introduction to Physics** by *John Doe* — McGraw-Hill, 2021 — Status: Available
+      [View PDF](link)
+   
+   Physical Books:
+   
+   1. **Introduction to Algorithms** by *Thomas Cormen* — MIT Press, 2009 — Status: Available
+      Call: QA76.6, Loc: Circulation Section
+   
+   Example 2 - User asks for "3 books about calculus":
+   I found 3 books about calculus:
+   
+   E-Books:
+   
+   1. **Calculus I** by *Author* — Publisher, 2020 — Status: Available
+      [View PDF](link)
+   
+   Physical Books:
+   
+   1. **Calculus II** by *Author* — Publisher, 2019 — Status: Available
+      Call: QA303, Loc: Circulation Section
+   
+   2. **Advanced Calculus** by *Author* — Publisher, 2018 — Status: Available
+      Call: QA303, Loc: Reference Section
 
-2. Count your results: "I found X books (Y e-books and Z physical books):" then list them.
+2. ALWAYS respect the user's requested quantity - return exactly that many books if available in BOOKS DATA.
 3. NEVER fabricate book titles, authors, publishers, call numbers, or statuses. ONLY cite data actually provided below.
 4. If BOOKS DATA shows 0 results, say: "I didn't find books matching that query in our catalog. You can try different keywords, or visit the library for assistance."
-5. If a user asks about a college (e.g. "engineering books"), list ALL books from that college's data.
-6. If a user asks about a topic (e.g. "calculus"), list books whose titles match that topic.
+5. If a user asks about a college (e.g. "engineering books"), list books from that college's data up to the requested quantity.
+6. If a user asks about a topic (e.g. "calculus"), list books whose titles match that topic up to the requested quantity.
 7. For greetings (hi, hello, kumusta), respond warmly and offer to help — do NOT search for books.
 8. For service questions (hours, forms, databases), answer from the LIBRARY FACTS above — do NOT search for books.
 9. Respond in Filipino if the user writes in Filipino/Tagalog. Otherwise use English.
-10. Keep responses well-structured with clear separation between book entries.
-11. If more than 10 books match, show the first 10 and say "and X more — ask me to show more or narrow your search."
+10. Keep responses well-structured using numbered lists with proper line breaks for clarity.
+11. If user doesn't specify a quantity and more than 10 books match, list the first 10 and say "and X more — ask me to show more or narrow your search."
 12. Always end with a helpful follow-up: "Would you like to know more about any of these books?" or similar.
-13. Use minimal emojis — only when absolutely necessary for clarity.
+13. Use minimal emojis - only use format labels (E-Books: / Physical Books:) without emoji icons for a professional appearance.
 
 STYLE AND FORMATTING — MANDATORY:
 - Use asterisks for emphasis: *italic* for titles, **bold** for important terms and headings.
@@ -128,8 +191,8 @@ STYLE AND FORMATTING — MANDATORY:
 - Use **bold** to highlight book titles, section names, and key information.
 - Use *italic* for subtitles, author names, and supplementary details.
 - Keep your tone professional, courteous, and informative — like a formal university librarian.
-- Avoid excessive emojis — use them sparingly only when they add clarity.
-- Structure responses clearly with line breaks and horizontal separators (---) between book entries.`;
+- Do not use emojis except sparingly for book listings where a simple icon aids readability.
+- Structure responses clearly with line breaks between sections.`;
 
 // ─── RESPONSE SANITIZER ──────────────────────────────────────────────────────
 
@@ -138,7 +201,7 @@ function sanitizeResponse(text: string): string {
     .replace(/_{2,}(.*?)_{2,}/g, "$1")
     .replace(/~{2}(.*?)~{2}/g, "$1")
     .replace(/^#{1,6}\s+/gm, "")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    // DO NOT strip markdown links — they are rendered as clickable buttons in the UI
     .replace(/`{1,3}([^`]+)`{1,3}/g, "$1")
     .trim();
 }
@@ -235,6 +298,44 @@ function detectIntent(message: string): Intent {
   return "book_search";
 }
 
+// ─── QUANTITY PARSING ─────────────────────────────────────────────────────────
+
+function parseRequestedQuantity(message: string): { ebooks: number; physical: number; total: number } | null {
+  const lower = message.toLowerCase();
+
+  // Pattern: "5 ebooks and 5 physical books"
+  const splitMatch = lower.match(/(\d+)\s*(?:e-?books?|ebook|digital\s*books?)\s*(?:and|&|,)\s*(\d+)\s*(?:physical\s*books?|printed?\s*books?|hard\s*cop(?:y|ies))/i);
+  if (splitMatch) {
+    return { ebooks: parseInt(splitMatch[1]), physical: parseInt(splitMatch[2]), total: parseInt(splitMatch[1]) + parseInt(splitMatch[2]) };
+  }
+
+  // Reverse pattern: "5 physical and 5 ebooks"
+  const reverseMatch = lower.match(/(\d+)\s*(?:physical\s*books?|printed?\s*books?|hard\s*cop(?:y|ies))\s*(?:and|&|,)\s*(\d+)\s*(?:e-?books?|ebook|digital\s*books?)/i);
+  if (reverseMatch) {
+    return { ebooks: parseInt(reverseMatch[2]), physical: parseInt(reverseMatch[1]), total: parseInt(reverseMatch[1]) + parseInt(reverseMatch[2]) };
+  }
+
+  // Just ebooks: "5 ebooks"
+  const ebookOnly = lower.match(/(\d+)\s*(?:e-?books?|ebook|digital\s*books?)/i);
+  if (ebookOnly) {
+    return { ebooks: parseInt(ebookOnly[1]), physical: 0, total: parseInt(ebookOnly[1]) };
+  }
+
+  // Just physical: "5 physical books"
+  const physicalOnly = lower.match(/(\d+)\s*(?:physical\s*books?|printed?\s*books?|hard\s*cop(?:y|ies))/i);
+  if (physicalOnly) {
+    return { ebooks: 0, physical: parseInt(physicalOnly[1]), total: parseInt(physicalOnly[1]) };
+  }
+
+  // General: "10 books" or "give me 5"
+  const generalMatch = lower.match(/(\d+)\s*(?:books?|titles?|results?)/i);
+  if (generalMatch) {
+    return { ebooks: 0, physical: 0, total: parseInt(generalMatch[1]) };
+  }
+
+  return null;
+}
+
 // ─── SEARCH TERM EXTRACTION ─────────────────────────────────────────────────
 
 function extractSearchTerms(message: string, history: Message[] = []): string {
@@ -290,7 +391,8 @@ function buildLiveContext(
   faqs: Array<Record<string, unknown>>,
   message: string,
   intent: Intent,
-  bookCount: number
+  bookCount: number,
+  requestedQty: { ebooks: number; physical: number; total: number } | null
 ): string {
   const parts: string[] = [];
 
@@ -305,8 +407,25 @@ function buildLiveContext(
 
   // Always include book data if available
   if (books.length > 0) {
-    parts.push(`\n\nBOOKS DATA — ${bookCount} total results from the MSEUF catalog (showing ${Math.min(books.length, 15)}):`);
-    books.slice(0, 15).forEach((b, i) => {
+    // Separate into e-books and physical books
+    const ebooks = books.filter(b => b.pdfViewLink || b.pdfDownloadLink || b.digitalAccessLink);
+    const physicalBooks = books.filter(b => !b.pdfViewLink && !b.pdfDownloadLink && !b.digitalAccessLink);
+
+    let qtyNote = "";
+    if (requestedQty) {
+      if (requestedQty.ebooks > 0 && requestedQty.physical > 0) {
+        qtyNote = `\nUSER REQUESTED: ${requestedQty.ebooks} e-books and ${requestedQty.physical} physical books.`;
+        qtyNote += `\nAVAILABLE: ${ebooks.length} e-books and ${physicalBooks.length} physical books.`;
+        qtyNote += `\nIMPORTANT: Return EXACTLY ${requestedQty.ebooks} e-books and ${requestedQty.physical} physical books if enough are available. If not enough, return all available and explain how many you found.`;
+      } else if (requestedQty.total > 0) {
+        qtyNote = `\nUSER REQUESTED: ${requestedQty.total} books total.`;
+        qtyNote += `\nAVAILABLE: ${ebooks.length} e-books and ${physicalBooks.length} physical books (${books.length} total).`;
+        qtyNote += `\nIMPORTANT: Return EXACTLY ${requestedQty.total} books if enough are available. If not enough, return all available and explain how many you found.`;
+      }
+    }
+
+    parts.push(`\n\nBOOKS DATA — ${bookCount} total results from the MSEUF catalog (${ebooks.length} e-books, ${physicalBooks.length} physical books, showing ${Math.min(books.length, 20)}):${qtyNote}`);
+    books.slice(0, 20).forEach((b, i) => {
       const authors = (b.authors as string[])?.join(", ") || "Unknown";
       const subject = ((b.subject as string[]) || []).join(", ");
       const publisher = b.publisher || "N/A";
@@ -327,8 +446,8 @@ function buildLiveContext(
         `${i + 1}. [FORMAT: ${formatType}] "${b.title}" by ${authors} | ${subject} | ${publisher}, ${year} | ${callNum} ${location} | Status: ${status} ${pdfViewLink} ${pdfDownloadLink} ${ebookLink}`.trim()
       );
     });
-    if (bookCount > 15) {
-      parts.push(`(${bookCount - 15} more books available — user can ask to see more)`);
+    if (bookCount > 20) {
+      parts.push(`(${bookCount - 20} more books available — user can ask to see more)`);
     }
   } else if (intent === "book_search") {
     parts.push("\n\nBOOKS DATA — 0 results found in the catalog for this query.");
@@ -379,10 +498,15 @@ export async function POST(request: NextRequest) {
     let faqs: Array<Record<string, unknown>> = [];
     let totalBookCount = 0;
 
+    // Parse requested quantity from user message
+    const requestedQty = parseRequestedQuantity(message);
+    // Determine how many books to fetch
+    const fetchLimit = requestedQty ? Math.max(requestedQty.total * 2, 20) : 20;
+
     if (intent === "book_search" || intent === "general") {
       try {
         [books, faqs] = await Promise.all([
-          convexClient.query(api.books.search, { query: searchQuery, limit: 20 }) as Promise<Array<Record<string, unknown>>>,
+          convexClient.query(api.books.search, { query: searchQuery, limit: Math.min(fetchLimit, 40) }) as Promise<Array<Record<string, unknown>>>,
           convexClient.query(api.faqs.list, { activeOnly: true }) as Promise<Array<Record<string, unknown>>>,
         ]);
         totalBookCount = books.length;
@@ -398,7 +522,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Build context for Gemini
-    const liveContext = buildLiveContext(books, faqs, message, intent, totalBookCount);
+    const liveContext = buildLiveContext(books, faqs, message, intent, totalBookCount, requestedQty);
 
     // 5. Build Gemini chat history
     const recentHistory = historyArr.slice(-10);
@@ -428,8 +552,10 @@ export async function POST(request: NextRequest) {
     const responseText = sanitizeResponse(rawText);
 
     // 7. Return response with book metadata for UI cards
+    // Send all the books shown in context so the cards match the AI text
+    const maxCards = requestedQty ? requestedQty.total : 10;
     const metadata =
-      books.length > 0 ? { books: books.slice(0, 5) } : undefined;
+      books.length > 0 ? { books: books.slice(0, Math.min(maxCards, 20)) } : undefined;
 
     // 8. Log query with student info
     try {

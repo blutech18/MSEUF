@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useChatStore } from "@/stores/chatStore";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../convex/_generated/api";
-import type { ChatMessage } from "@/types";
+import type { Book, ChatMessage } from "@/types";
 
 // Fresh HTTP client — bypasses the React subscription cache so deleted/
 // re-created students are always fetched from the latest Convex state.
@@ -88,6 +88,7 @@ const PROGRAMS: Record<string, string[]> = {
 
 
 const URL_REGEX = /https?:\/\/[^\s,;)>\]"']+/g;
+const MD_LINK_REGEX = /\[([^\]]+)\]\(([^)]+)\)/;
 
 function parseSegments(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
@@ -95,13 +96,23 @@ function parseSegments(text: string): React.ReactNode[] {
   let key = 0;
 
   while (remaining.length > 0) {
-    // Find earliest match among bold, italic, and URL
+    // Find earliest match among markdown links, bold, italic, and bare URLs
+    const mdLinkMatch = MD_LINK_REGEX.exec(remaining);
     const boldMatch = new RegExp(/\*\*(.+?)\*\*/).exec(remaining);
     const italicMatch = new RegExp(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/).exec(remaining);
     URL_REGEX.lastIndex = 0;
     const urlMatch = URL_REGEX.exec(remaining);
 
-    const candidates = [boldMatch, italicMatch, urlMatch].filter(Boolean) as RegExpExecArray[];
+    // If there's a URL match that's inside a markdown link, skip it
+    const candidates = [mdLinkMatch, boldMatch, italicMatch, urlMatch].filter((m) => {
+      if (!m) return false;
+      // If this is a bare URL match but it falls within a markdown link, skip it
+      if (m === urlMatch && mdLinkMatch && m.index >= mdLinkMatch.index && m.index < mdLinkMatch.index + mdLinkMatch[0].length) {
+        return false;
+      }
+      return true;
+    }) as RegExpExecArray[];
+
     if (candidates.length === 0) {
       nodes.push(<span key={key++}>{remaining}</span>);
       break;
@@ -113,7 +124,32 @@ function parseSegments(text: string): React.ReactNode[] {
       nodes.push(<span key={key++}>{remaining.slice(0, earliest.index)}</span>);
     }
 
-    if (earliest === urlMatch) {
+    if (earliest === mdLinkMatch) {
+      // Markdown link: [text](url)
+      const linkText = earliest[1];
+      const linkUrl = earliest[2];
+      const isPdf = /pdf|download/i.test(linkText);
+      const isEbook = /e-?book|access/i.test(linkText);
+      nodes.push(
+        <a
+          key={key++}
+          href={linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors no-underline",
+            isPdf
+              ? "bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900"
+              : isEbook
+                ? "bg-maroon-50 text-maroon-700 hover:bg-maroon-100 hover:text-maroon-900"
+                : "bg-gray-100 text-maroon-700 hover:bg-gray-200 hover:text-maroon-900"
+          )}
+        >
+          <ExternalLink className="h-3 w-3" />
+          {linkText}
+        </a>,
+      );
+    } else if (earliest === urlMatch) {
       const url = earliest[0];
       nodes.push(
         <a
@@ -147,12 +183,62 @@ function parseSegments(text: string): React.ReactNode[] {
 }
 
 function formatBotContent(content: string): React.ReactNode[] {
-  return content.split("\n").map((line, lineIdx, arr) => (
-    <span key={lineIdx}>
-      {parseSegments(line)}
-      {lineIdx < arr.length - 1 && <br />}
-    </span>
-  ));
+  const lines = content.split("\n");
+  const result: React.ReactNode[] = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Ordered List Item: "1. something"
+    const objMatch = line.match(/^(\d+\.)\s+(.*)/);
+    if (objMatch) {
+      result.push(
+        <div key={i} className="mt-4 first:mt-1 pl-6 -indent-6 leading-relaxed">
+          <span className="mr-2 font-semibold text-maroon-800">{objMatch[1]}</span>
+          {parseSegments(objMatch[2])}
+        </div>
+      );
+      continue;
+    }
+    
+    // Unordered List Item: "- something"
+    const ulMatch = line.match(/^([-\*])\s+(.*)/);
+    if (ulMatch) {
+      result.push(
+        <div key={i} className="mt-2 text-sm pl-6 -indent-4 leading-relaxed">
+          <span className="mr-2 text-maroon-600 font-bold">•</span>
+          {parseSegments(ulMatch[2])}
+        </div>
+      );
+      continue;
+    }
+
+    // Indented content (e.g., links under the numbered item)
+    const indentMatch = line.match(/^(\s{2,})(.*)/);
+    if (indentMatch && indentMatch[2].trim() !== "") {
+      result.push(
+        <div key={i} className="mt-2 mb-4 pl-6 flex flex-wrap gap-1.5 items-center">
+          {parseSegments(indentMatch[2])}
+        </div>
+      );
+      continue;
+    }
+
+    // Empty lines
+    if (line.trim() === "") {
+      result.push(<div key={i} className="h-1" />);
+      continue;
+    }
+
+    // Normal text
+    result.push(
+      <div key={i} className="mb-3 last:mb-0 leading-relaxed">
+        {parseSegments(line)}
+      </div>
+    );
+  }
+  
+  return result;
 }
 
 export default function ChatWidget() {
@@ -793,13 +879,13 @@ export default function ChatWidget() {
                 </div>
                 <div
                   className={cn(
-                    "flex flex-col",
+                    "flex flex-col min-w-0 flex-1",
                     message.role === "user" ? "items-end" : "items-start",
                   )}
                 >
                   <div
                     className={cn(
-                      "max-w-full rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                      "max-w-full rounded-2xl px-4 py-2.5 text-sm leading-relaxed overflow-hidden",
                       message.role === "user"
                         ? "bg-maroon-800 text-white"
                         : "bg-gray-100 text-gray-800",
@@ -812,78 +898,133 @@ export default function ChatWidget() {
                     </div>
 
                     {message.metadata?.books &&
-                      message.metadata.books.length > 0 && (
-                        <div className="mt-3 space-y-2">
-                          {message.metadata.books.map((book) => (
+                      message.metadata.books.length > 0 && (() => {
+                        const isEbook = (b: Book) => !!(b.pdfViewLink || b.pdfDownloadLink || b.digitalAccessLink);
+                        const ebooks = message.metadata.books.filter(isEbook);
+                        const physicalBooks = message.metadata.books.filter((b) => !isEbook(b));
+                        const totalCount = message.metadata.books.length;
+
+                        const renderBookCard = (book: Book) => {
+                          const digital = isEbook(book);
+                          return (
                             <div
                               key={book._id}
-                              className="rounded-lg border border-gray-200 bg-white p-3"
+                              className="rounded-md border border-gray-200 bg-white px-3 py-2.5"
                             >
-                              <div className="flex items-start gap-2">
-                                <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-maroon-600" />
-                                <div className="flex-1">
-                                  <p className="font-medium text-gray-900">
-                                    {book.title}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {book.authors.join(", ")}
-                                  </p>
-                                  {book.callNumber && (
-                                    <p className="mt-1 text-xs text-gray-400">
-                                      Call #: {book.callNumber}
-                                    </p>
-                                  )}
-                                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                                    <span
-                                      className={cn(
-                                        "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
-                                        book.availability === "available"
-                                          ? "bg-green-100 text-green-700"
-                                          : book.availability === "reserved"
-                                            ? "bg-yellow-100 text-yellow-700"
-                                            : "bg-red-100 text-red-700",
-                                      )}
-                                    >
-                                      {book.availability.charAt(0).toUpperCase() +
-                                        book.availability.slice(1)}
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                      {book.availableCopies ?? 1}/{book.totalCopies ?? 1} copies available
-                                    </span>
-                                  </div>
-                                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                    {book.digitalAccessLink && (
-                                      <a
-                                        href={book.digitalAccessLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 rounded-full bg-maroon-50 px-2.5 py-0.5 text-xs font-medium text-maroon-700 transition-colors hover:bg-maroon-100 hover:text-maroon-900"
-                                      >
-                                        <ExternalLink className="h-3 w-3" />
-                                        Access E-Book
-                                      </a>
+                              {/* Row 1: Title + format badge */}
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-[13px] font-semibold text-gray-900 leading-tight">{book.title}</p>
+                                <span className={cn(
+                                  "mt-0.5 shrink-0 rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-wider leading-normal",
+                                  digital ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"
+                                )}>
+                                  {digital ? "E-Book" : "Physical"}
+                                </span>
+                              </div>
+                              {/* Row 2: Author */}
+                              <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">{book.authors.join(", ")}</p>
+                              {/* Row 3: Call # / Location (physical only) */}
+                              {!digital && book.callNumber && (
+                                <p className="mt-1 text-[11px] text-gray-400 leading-snug">
+                                  Call #: {book.callNumber}{book.shelfLocation ? `  ·  ${book.shelfLocation}` : ""}
+                                </p>
+                              )}
+                              {/* Row 4: Status + copies + actions */}
+                              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                <span className={cn(
+                                  "rounded px-1.5 py-px text-[10px] font-semibold leading-normal",
+                                  book.availability === "available"
+                                    ? "bg-green-50 text-green-700"
+                                    : book.availability === "reserved"
+                                      ? "bg-yellow-50 text-yellow-700"
+                                      : "bg-red-50 text-red-700",
+                                )}>
+                                  {book.availability.charAt(0).toUpperCase() + book.availability.slice(1)}
+                                </span>
+                                {!digital && (
+                                  <span className="text-[10px] text-gray-400">
+                                    {book.availableCopies ?? 1}/{book.totalCopies ?? 1} copies
+                                  </span>
+                                )}
+                                {/* Spacer pushes action buttons right */}
+                                <span className="flex-1" />
+                                {book.pdfViewLink && (
+                                  <a href={book.pdfViewLink} target="_blank" rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[10px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+                                    <ExternalLink className="h-2.5 w-2.5" />View PDF
+                                  </a>
+                                )}
+                                {book.pdfDownloadLink && (
+                                  <a href={book.pdfDownloadLink} target="_blank" rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[10px] font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors">
+                                    <ExternalLink className="h-2.5 w-2.5" />Download
+                                  </a>
+                                )}
+                                {book.digitalAccessLink && !book.pdfViewLink && !book.pdfDownloadLink && (
+                                  <a href={book.digitalAccessLink} target="_blank" rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[10px] font-medium text-maroon-700 bg-maroon-50 hover:bg-maroon-100 transition-colors">
+                                    <ExternalLink className="h-2.5 w-2.5" />Access
+                                  </a>
+                                )}
+                                {!digital && (book.availableCopies ?? 1) > 0 && verifiedStudent && (
+                                  <button
+                                    onClick={() => handleReserveBook(book._id, book.title)}
+                                    disabled={reservingBookId === book._id}
+                                    className="inline-flex items-center gap-0.5 rounded bg-maroon-800 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-maroon-900 disabled:opacity-50 transition-colors">
+                                    {reservingBookId === book._id ? (
+                                      <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                    ) : (
+                                      <BookOpen className="h-2.5 w-2.5" />
                                     )}
-                                    {(book.availableCopies ?? 1) > 0 && verifiedStudent && (
-                                      <button
-                                        onClick={() => handleReserveBook(book._id, book.title)}
-                                        disabled={reservingBookId === book._id}
-                                        className="inline-flex items-center gap-1 rounded-full bg-maroon-800 px-2.5 py-0.5 text-xs font-medium text-white transition-colors hover:bg-maroon-900 disabled:opacity-50"
-                                      >
-                                        {reservingBookId === book._id ? (
-                                          <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                          <BookOpen className="h-3 w-3" />
-                                        )}
-                                        Reserve
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
+                                    Reserve
+                                  </button>
+                                )}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
+                          );
+                        };
+
+                        return (
+                          <div className="mt-2.5 space-y-2">
+                            {/* Summary bar */}
+                            <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                              <span>{totalCount} {totalCount === 1 ? "result" : "results"}</span>
+                              {ebooks.length > 0 && (
+                                <>
+                                  <span className="text-gray-300">·</span>
+                                  <span className="text-blue-600">{ebooks.length} e-{ebooks.length === 1 ? "book" : "books"}</span>
+                                </>
+                              )}
+                              {physicalBooks.length > 0 && (
+                                <>
+                                  <span className="text-gray-300">·</span>
+                                  <span className="text-amber-600">{physicalBooks.length} physical</span>
+                                </>
+                              )}
+                            </div>
+
+                            {/* E-Books section */}
+                            {ebooks.length > 0 && (
+                              <div className="space-y-1.5">
+                                {(ebooks.length > 0 && physicalBooks.length > 0) && (
+                                  <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">E-Books</p>
+                                )}
+                                {ebooks.map(renderBookCard)}
+                              </div>
+                            )}
+
+                            {/* Physical Books section */}
+                            {physicalBooks.length > 0 && (
+                              <div className="space-y-1.5">
+                                {(ebooks.length > 0 && physicalBooks.length > 0) && (
+                                  <p className={cn("text-[10px] font-semibold text-amber-600 uppercase tracking-wider", ebooks.length > 0 && "mt-1")}>Physical Books</p>
+                                )}
+                                {physicalBooks.map(renderBookCard)}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                     {message.metadata?.suggestions &&
                       message.metadata.suggestions.length > 0 && (

@@ -16,6 +16,9 @@ export interface Book {
   language?: string;
   format?: string;
   digitalAccessLink?: string;
+  pdfViewLink?: string;
+  pdfDownloadLink?: string;
+  pdfThumbnail?: string;
   coverImageUrl?: string;
   availability: BookAvailabilityStatus;
   totalCopies?: number;
