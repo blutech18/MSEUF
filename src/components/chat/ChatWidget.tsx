@@ -465,7 +465,7 @@ export default function ChatWidget() {
                 </button>
                 
                 <p className="relative z-10 text-[16px] text-[#3c4043] leading-[1.6]">
-                  Hi! I&apos;m <strong className="text-[#8b152b] font-bold">ROSe</strong>, your MSEUF University Libraries Assistant. How can I help you today?
+                  Hi! I&apos;m <strong className="text-[#8b152b] font-bold">ROSe</strong>, your MSEUF University Library Assistant. How can I help you today?
                 </p>
               </div>
             </div>

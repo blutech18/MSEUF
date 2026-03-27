@@ -74,7 +74,7 @@ export const useChatStore = create<ChatState>()(
                 id: crypto.randomUUID(),
                 role: "assistant",
                 content:
-                  "Mabuhay! I'm ROSe (Reference Online Services), your MSEUF University Libraries assistant. I can help you search for books, find digital resources, answer questions about library services, and more. How can I help you today?",
+                  "Mabuhay! I'm ROSe (Reference Online Services), your MSEUF University Library assistant. I can help you search for books, find digital resources, answer questions about library services, and more. How can I help you today?",
                 timestamp: Date.now(),
               },
             ],

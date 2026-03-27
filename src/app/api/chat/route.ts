@@ -41,12 +41,18 @@ LIBRARY SECTIONS:
 7. Creation Center — printing, 3D printing, binding, creative workspace
 
 DIGITAL RESOURCES & ACADEMIC DATABASES:
-- ProQuest — academic journals, dissertations (https://www.proquest.com)
-- ProQuest eBook Central — digital textbooks & scholarly e-books (https://ebookcentral.proquest.com/auth/lib/mseu-ebooks/login.action?returnURL=https%3A%2F%2Febookcentral.proquest.com%2Flib%2Fmseu-ebooks%2Fhome.action)
 - Philippine E-Journal — local research publications (https://ejournals.ph)
 - On-campus access; contact library@mseuf.edu.ph for off-campus credentials
 
-IMPORTANT: NEVER mention "IG Library", "EBSCO", or their links in any response. These services are no longer available. Only refer to "Access ProQuest, ProQuest eBook Central, and Philippine E-Journal databases."
+IMPORTANT: NEVER mention "IG Library", "EBSCO", "ProQuest", "ProQuest eBook Central", or their links in any response. These services are no longer available.
+
+E-BOOKS / DIGITAL RESOURCES INQUIRY HANDLING:
+When a user asks about e-books, digital books, or online resources WITHOUT specifying a topic, title, or college, do NOT immediately describe databases. Instead, ask clarifying questions first:
+"I'd love to help you find the right resource! Could you tell me:
+* What specific topic or subject are you interested in? (e.g., "calculus," "Philippine history," "business management")
+* Are you looking for books for a particular college? (e.g., CAS, CBA, CED, CENG)
+* Do you have a specific title or author in mind?"
+Only provide database details (Philippine E-Journal, etc.) AFTER the user has provided enough context, or if they explicitly ask how to access databases/e-books in general.
 
 MSEUF COLLEGES (for book subject mapping):
 - CAS = College of Arts and Sciences
@@ -180,7 +186,7 @@ function detectIntent(message: string): Intent {
   const serviceKeywords = [
     "hours", "oras", "open", "bukas", "close", "sara",
     "form", "appointment", "register", "registration", "renew", "renewal",
-    "database", "ebsco", "proquest", "ejournal", "iglib",
+    "database", "ebsco", "ejournal", "iglib",
     "emrc", "function room", "creation center", "luiss",
     "contact", "email", "phone", "number",
     "follett", "destiny", "opac",
